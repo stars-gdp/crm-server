@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "start-dev": "NODE_ENV=development nodemon server.js",
-    "start-prod": "NODE_ENV=production node server.js"
+    "start-prod": "NODE_ENV=production node server.js",
+    "restart": "pm2 reload crm-server"
   },
   "dependencies": {
     "axios": "^1.8.1",
