@@ -1,28 +1,42 @@
 {
   "name": "crm-server",
   "version": "1.0.0",
-  "main": "server.js",
-  "type": "module",
+  "main": "build/server.js",
   "license": "MIT",
   "scripts": {
-    "start-dev": "NODE_ENV=development nodemon server.js",
-    "start-prod": "NODE_ENV=production node server.js",
+    "build": "tsc",
+    "dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only src/server.ts",
+    "prod": "yarn build && NODE_ENV=production node build/server.js",
     "restart": "pm2 reload crm-server"
   },
   "dependencies": {
     "axios": "^1.8.1",
+    "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
+    "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "fs-extra": "^11.3.0",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.13.9",
     "nodemon": "^3.1.9",
-    "prettier": "^3.5.2"
+    "prettier": "^3.5.2",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.2"
   }
 }

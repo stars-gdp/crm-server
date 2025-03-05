@@ -1,0 +1,52 @@
+name: Deploy to Digital Ocean
+
+on:
+  push:
+    branches: [ master ]  # Using master branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'  # Adjust to your Node.js version
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build  # Using Yarn for build
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 143.244.134.91 >> ~/.ssh/known_hosts
+
+      - name: Deploy to Digital Ocean
+        run: |
+          # Directory should already exist and be owned by crmuser
+          
+          # Copy build folder
+          rsync -avz --delete ./build/ crmuser@143.244.134.91:/var/www/crm-app/build/
+          
+          # Copy config files
+          scp production.env crmuser@143.244.134.91:/var/www/crm-app/
+          scp ecosystem.config.cjs crmuser@143.244.134.91:/var/www/crm-app/
+          scp package.json crmuser@143.244.134.91:/var/www/crm-app/
+          
+          # Install production dependencies on server using Yarn
+          ssh crmuser@143.244.134.91 'cd /var/www/crm-app && yarn install --production --frozen-lockfile'
+          
+          # Restart PM2 service if it exists
+          ssh crmuser@143.244.134.91 'cd /var/www/crm-app && [ -f ecosystem.config.cjs ] && pm2 reload ecosystem.config.cjs || pm2 start ecosystem.config.cjs'
