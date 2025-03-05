@@ -41,7 +41,6 @@ jobs:
           rsync -avz --delete ./build/ crmuser@143.244.134.91:/var/www/crm-app/build/
           
           # Copy config files
-          scp production.env crmuser@143.244.134.91:/var/www/crm-app/
           scp ecosystem.config.cjs crmuser@143.244.134.91:/var/www/crm-app/
           scp package.json crmuser@143.244.134.91:/var/www/crm-app/
           scp .nvmrc crmuser@143.244.134.91:/var/www/crm-app/

@@ -138,3 +138,8 @@ dist
 
 .idea
 build
+
+# Environment files
+*.env
+.env
+.env.*
