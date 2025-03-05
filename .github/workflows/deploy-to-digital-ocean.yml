@@ -44,9 +44,10 @@ jobs:
           scp production.env crmuser@143.244.134.91:/var/www/crm-app/
           scp ecosystem.config.cjs crmuser@143.244.134.91:/var/www/crm-app/
           scp package.json crmuser@143.244.134.91:/var/www/crm-app/
+          scp .nvmrc crmuser@143.244.134.91:/var/www/crm-app/
           
-          # Install production dependencies on server using Yarn
-          ssh crmuser@143.244.134.91 'cd /var/www/crm-app && yarn install --production --frozen-lockfile'
+          # Install production dependencies on server using Yarn with correct Node version
+          ssh crmuser@143.244.134.91 'cd /var/www/crm-app && export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use 22 && yarn install --production --frozen-lockfile'
           
-          # Restart PM2 service if it exists
-          ssh crmuser@143.244.134.91 'cd /var/www/crm-app && [ -f ecosystem.config.cjs ] && pm2 reload ecosystem.config.cjs || pm2 start ecosystem.config.cjs'
+          # Restart PM2 service if it exists (with correct Node version)
+          ssh crmuser@143.244.134.91 'cd /var/www/crm-app && export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use 22 && [ -f ecosystem.config.cjs ] && pm2 reload ecosystem.config.cjs || pm2 start ecosystem.config.cjs'
