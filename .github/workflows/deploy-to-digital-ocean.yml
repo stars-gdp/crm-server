@@ -18,7 +18,7 @@ jobs:
           node-version: '22'  # Adjust to your Node.js version
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Build
         run: yarn build  # Using Yarn for build
