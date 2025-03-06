@@ -10,7 +10,7 @@ export const AppDataSource = new DataSource({
   username: EnvConfig.DATABASE_USER,
   password: EnvConfig.DATABASE_PASSWORD,
   database: EnvConfig.DATABASE_NAME,
-  synchronize: process.env.NODE_ENV !== "production", // Auto-create tables in development
+  synchronize: false, // process.env.NODE_ENV !== "production", // Auto-create tables in development
   logging: process.env.NODE_ENV !== "production",
   entities: [path.join(__dirname, "../entities/**/*.entity{.ts,.js}")],
   migrations: [path.join(__dirname, "../migrations/**/*{.ts,.js}")],

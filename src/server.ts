@@ -72,15 +72,22 @@ app.get("/webhook", (req, res) => {
 });
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response) => {
-  LogsUtils.logError(err.stack || "Unknown error");
-  res.status(500).json({
-    error:
-      process.env.NODE_ENV === "production"
-        ? "Internal Server Error"
-        : err.message,
-  });
-});
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ) => {
+    LogsUtils.logError(err.stack || "Unknown error");
+    res.status(500).json({
+      error:
+        process.env.NODE_ENV === "production"
+          ? "Internal Server Error"
+          : err.message,
+    });
+  },
+);
 
 // Create HTTP server
 const server = createServer(app);
