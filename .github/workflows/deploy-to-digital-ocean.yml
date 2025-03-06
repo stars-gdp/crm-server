@@ -46,7 +46,7 @@ jobs:
           scp .nvmrc crmuser@143.244.134.91:/var/www/crm-app/
           
           # Install production dependencies on server using Yarn with correct Node version
-          ssh crmuser@143.244.134.91 'cd /var/www/crm-app && export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use 22 && yarn install --production --frozen-lockfile'
+          ssh crmuser@143.244.134.91 'cd /var/www/crm-app && export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use 22 && yarn install --production'
 
       - name: Generate production.env file
         run: |
