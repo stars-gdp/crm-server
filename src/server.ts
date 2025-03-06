@@ -1,3 +1,4 @@
+import "reflect-metadata"; // Required for TypeORM
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -5,6 +6,8 @@ import morgan from "morgan";
 import { createServer } from "http";
 import EnvConfig from "./config/env.config";
 import LogsUtils from "./utils/logs.utils";
+import { initializeDatabase } from "./config/database.config";
+import apiRoutes from "./routes";
 
 // Initialize Express app
 const app = express();
@@ -48,6 +51,8 @@ app.get("/", (req, res) => {
   res.sendStatus(403);
 });
 
+app.use("/api", apiRoutes);
+
 // accepts GET requests at the /webhook endpoint. You need this URL to setup webhook initially.
 // info on verification request payload: https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verification-requests
 app.get("/webhook", (req, res) => {
@@ -67,32 +72,40 @@ app.get("/webhook", (req, res) => {
 });
 
 // Error handling middleware
-app.use(
-  (
-    err: Error,
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ) => {
-    LogsUtils.logError(err.stack || "Unknown error");
-    res.status(500).json({
-      error:
-        process.env.NODE_ENV === "production"
-          ? "Internal Server Error"
-          : err.message,
-    });
-  },
-);
+app.use((err: Error, req: express.Request, res: express.Response) => {
+  LogsUtils.logError(err.stack || "Unknown error");
+  res.status(500).json({
+    error:
+      process.env.NODE_ENV === "production"
+        ? "Internal Server Error"
+        : err.message,
+  });
+});
 
 // Create HTTP server
 const server = createServer(app);
 
 // Start server
-server.listen(EnvConfig.PORT, () => {
-  LogsUtils.logMessage(
-    `Server running in ${process.env.NODE_ENV || "development"} mode on port ${EnvConfig.PORT}`,
-  );
-});
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    // Initialize database connection
+    await initializeDatabase();
+    LogsUtils.logMessage("Database connection established successfully");
+
+    // Start server
+    server.listen(EnvConfig.PORT, () => {
+      LogsUtils.logMessage(
+        `Server running in ${process.env.NODE_ENV || "development"} mode on port ${EnvConfig.PORT}`,
+      );
+    });
+  } catch (error) {
+    LogsUtils.logError("Failed to start server", error as Error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 // Handle graceful shutdown
 process.on("SIGTERM", () => {

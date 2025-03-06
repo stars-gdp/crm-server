@@ -13,7 +13,9 @@
         "resolveJsonModule": true,
         "noImplicitAny": true,
         "declaration": false,
-        "removeComments": true
+        "removeComments": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "build"]

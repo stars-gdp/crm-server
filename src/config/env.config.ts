@@ -6,6 +6,11 @@ import path from "path";
 class EnvConfig implements IConfig {
   PORT: number;
   WEBHOOK_VERIFY_TOKEN: string;
+  DATABASE_URL: string;
+  DATABASE_PORT: number;
+  DATABASE_USER: string;
+  DATABASE_PASSWORD: string;
+  DATABASE_NAME: string;
 
   private loadDotEnv(): void {
     const envFile = process.env.NODE_ENV
@@ -27,11 +32,23 @@ class EnvConfig implements IConfig {
     this.PORT = parseInt(process.env.PORT || "3000", 10);
     this.WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || "";
 
+    // Database configuration
+    this.DATABASE_URL = process.env.DATABASE_URL || "localhost";
+    this.DATABASE_PORT = parseInt(process.env.DATABASE_PORT || "3306", 10);
+    this.DATABASE_USER = process.env.DATABASE_USER || "crm";
+    this.DATABASE_PASSWORD = process.env.DATABASE_PASSWORD || "";
+    this.DATABASE_NAME = process.env.DATABASE_NAME || "gdp";
+
     if (process.env.NODE_ENV === "production") {
       if (!this.WEBHOOK_VERIFY_TOKEN) {
         throw new Error(
           "WEBHOOK_VERIFY_TOKEN must be set in production environment",
         );
+      }
+
+      // Validate database configuration in production
+      if (!this.DATABASE_NAME) {
+        throw new Error("DB_PASSWORD must be set in production environment");
       }
     }
   }
