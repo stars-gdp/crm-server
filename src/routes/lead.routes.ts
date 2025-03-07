@@ -1,6 +1,8 @@
 import { Router, Request, Response } from "express";
 import { LeadRepository } from "../repositories/lead.repository";
 import LogsUtils from "../utils/logs.utils";
+import LeadsUtils from "../utils/leads.utils";
+import conversationsRepository from "../repositories/conversations.repository";
 
 const router = Router();
 const leadRepository = new LeadRepository();
@@ -21,6 +23,47 @@ router.get("/", async (req: Request, res: Response) => {
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const lead = await leadRepository.findById(Number(req.params.id));
+    if (!lead) {
+      res.status(404).json({ error: "Lead not found" });
+      return;
+    }
+    res.json(lead);
+  } catch (error) {
+    LogsUtils.logError(
+      `Failed to fetch lead ID: ${req.params.id}`,
+      error as Error,
+    );
+    res.status(500).json({ error: "Failed to fetch lead" });
+  }
+});
+
+// Get conversations by phone number
+router.get("/:phone/conversations", async (req: Request, res: Response) => {
+  try {
+    const conversations = await conversationsRepository.findByPhone(
+      req.params.phone,
+    );
+
+    if (!conversations) {
+      res.status(404).json({ error: "Conversations not found" });
+      return;
+    }
+    res.json(conversations);
+  } catch (error) {
+    LogsUtils.logError(
+      `Failed to fetch conversations by phone: ${req.params.phone}`,
+      error as Error,
+    );
+    res.status(500).json({
+      error: `Failed to fetch conversations by phone: ${req.params.phone}`,
+    });
+  }
+});
+
+// Get lead by phone
+router.get("/byphone/:phone", async (req: Request, res: Response) => {
+  try {
+    const lead = await leadRepository.findByPhone(req.params.phone);
     if (!lead) {
       res.status(404).json({ error: "Lead not found" });
       return;
@@ -72,6 +115,16 @@ router.put("/:id", async (req: Request, res: Response) => {
       error as Error,
     );
     res.status(500).json({ error: "Failed to update lead" });
+  }
+});
+
+router.post("/initiate-conversation", async (req: Request, res: Response) => {
+  try {
+    const newLeads = await LeadsUtils.initiateConversation();
+    res.json({ new_leads: newLeads, success: true });
+  } catch (error) {
+    LogsUtils.logError("Failed to initiate conversation", error as Error);
+    res.status(500).json({ error: "Failed to initiate conversation" });
   }
 });
 

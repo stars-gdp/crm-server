@@ -61,6 +61,9 @@ jobs:
           echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> production.env
           echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> production.env
           echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> production.env
+          echo "GRAPH_API_TOKEN=${{ secrets.GRAPH_API_TOKEN }}" >> production.env
+          echo "PHONE_NUMBER_ID=${{ secrets.PHONE_NUMBER_ID }}" >> production.env
+          echo "WHATSAPP_API_URL=${{ secrets.WHATSAPP_API_URL }}" >> production.env
           
           # Copy the generated file to server
           scp production.env crmuser@143.244.134.91:/var/www/crm-app/

@@ -3,6 +3,9 @@ import { WriteStream } from "node:fs";
 export interface IConfig {
   PORT: number;
   WEBHOOK_VERIFY_TOKEN: string;
+  GRAPH_API_TOKEN: string;
+  PHONE_NUMBER_ID: string;
+  WHATSAPP_API_URL: string;
   DATABASE_URL: string;
   DATABASE_PORT: number;
   DATABASE_USER: string;
@@ -17,6 +20,41 @@ export interface ILogsUtils {
   logMessage(message: string): void;
   logError(message: string, error?: Error): void;
   closeStreams(): void;
+}
+
+export interface IWhatsAppMessage {
+  messaging_product: string;
+  recipient_type: string;
+  to: string;
+  type: string;
+  text: {
+    body: string;
+  };
+}
+
+export interface ITemplateMessage {
+  messaging_product: string;
+  recipient_type: string;
+  to: string;
+  type: string;
+  template: {
+    name: string;
+    language: {
+      code: string;
+    };
+    components: any[];
+  };
+}
+
+export interface ITemplate {
+  name: string;
+  parameters?: ITemplateParameter[];
+}
+
+export interface ITemplateParameter {
+  parameter_name: string;
+  type: string;
+  text?: string;
 }
 
 export enum BomStatus {
@@ -39,4 +77,9 @@ export enum WgStatus {
   WG2 = "WG2",
   WG3 = "WG3",
   NotInterested = "Not Interested",
+}
+
+export enum MessageDirection {
+  INCOMING = "incoming",
+  OUTGOING = "outgoing",
 }

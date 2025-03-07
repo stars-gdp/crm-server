@@ -6,6 +6,9 @@ import path from "path";
 class EnvConfig implements IConfig {
   PORT: number;
   WEBHOOK_VERIFY_TOKEN: string;
+  GRAPH_API_TOKEN: string;
+  PHONE_NUMBER_ID: string;
+  WHATSAPP_API_URL: string;
   DATABASE_URL: string;
   DATABASE_PORT: number;
   DATABASE_USER: string;
@@ -31,6 +34,9 @@ class EnvConfig implements IConfig {
 
     this.PORT = parseInt(process.env.PORT || "3000", 10);
     this.WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || "";
+    this.GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN || "";
+    this.PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID || "";
+    this.WHATSAPP_API_URL = process.env.WHATSAPP_API_URL || "";
 
     // Database configuration
     this.DATABASE_URL = process.env.DATABASE_URL || "localhost";
