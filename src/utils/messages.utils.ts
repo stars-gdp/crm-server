@@ -80,6 +80,45 @@ class MessagesUtils {
         LogsUtils.logMessage(`Unknown message type: ${message.type}`);
     }
   }
+  private formatTimestamp(wa_message: any): Date {
+    try {
+      // Try to create a date from the timestamp and ensure it's UTC
+      const timestampValue = Number(wa_message.messages[0].timestamp) * 1000;
+      const date = new Date(timestampValue);
+
+      // Check if the date is valid
+      if (!isNaN(date.getTime())) {
+        // Convert to UTC by creating a new Date with UTC methods
+        return new Date(
+          Date.UTC(
+            date.getUTCFullYear(),
+            date.getUTCMonth(),
+            date.getUTCDate(),
+            date.getUTCHours(),
+            date.getUTCMinutes(),
+            date.getUTCSeconds(),
+            date.getUTCMilliseconds(),
+          ),
+        );
+      }
+    } catch (error) {
+      // Just continue to the fallback
+    }
+
+    // For fallback, create current time in UTC
+    const now = new Date();
+    return new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        now.getUTCHours(),
+        now.getUTCMinutes(),
+        now.getUTCSeconds(),
+        now.getUTCMilliseconds(),
+      ),
+    );
+  }
 
   async saveMessageToDb(
     wa_message: any,
@@ -97,9 +136,8 @@ class MessagesUtils {
         ? wa_message.messages[0]?.message_status === "accepted"
         : true
     ) {
-      const timestamp = new Date(
-        Number(wa_message.messages[0].timestamp) * 1000,
-      );
+      // TODO
+      const timestamp = new Date(); // this.formatTimestamp(wa_message);
       let templateText = !!templateName
         ? (await TemplateRepository.findByName(templateName))?.template_text
         : "";
