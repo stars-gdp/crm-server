@@ -1,0 +1,40 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "637380228776962",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15551651728",
+              "phone_number_id": "598027050041163"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "אהרון זילברמן"
+                },
+                "wa_id": "972546253106"
+              }
+            ],
+            "messages": [
+              {
+                "from": "972546253106",
+                "id": "wamid.HBgMOTcyNTQ2MjUzMTA2FQIAEhgUM0FEQzBGQUZCNzAyNEY1Qzg1Q0EA",
+                "timestamp": "1741376603",
+                "type": "reaction",
+                "reaction": {
+                  "message_id": "wamid.HBgMOTcyNTQ2MjUzMTA2FQIAERgSRUI4Q0QyQUU2MUJFQTRCRTAxAA==",
+                  "emoji": "👍"
+                }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

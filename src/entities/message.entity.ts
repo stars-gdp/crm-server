@@ -31,4 +31,7 @@ export class Message {
     default: () => "CURRENT_TIMESTAMP",
   })
   timestamp?: Date;
+
+  @Column({ name: "wa_id", nullable: false, length: 255 })
+  wa_id?: string;
 }

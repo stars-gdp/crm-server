@@ -38,30 +38,33 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // Get conversations by phone number
-router.get("/:phone/conversations", async (req: Request, res: Response) => {
-  try {
-    const conversations = await conversationsRepository.findByPhone(
-      req.params.phone,
-    );
+router.get(
+  "/phone/:phone/conversations",
+  async (req: Request, res: Response) => {
+    try {
+      const conversations = await conversationsRepository.findByPhone(
+        req.params.phone,
+      );
 
-    if (!conversations) {
-      res.status(404).json({ error: "Conversations not found" });
-      return;
+      if (!conversations) {
+        res.status(404).json({ error: "Conversations not found" });
+        return;
+      }
+      res.json(conversations);
+    } catch (error) {
+      LogsUtils.logError(
+        `Failed to fetch conversations by phone: ${req.params.phone}`,
+        error as Error,
+      );
+      res.status(500).json({
+        error: `Failed to fetch conversations by phone: ${req.params.phone}`,
+      });
     }
-    res.json(conversations);
-  } catch (error) {
-    LogsUtils.logError(
-      `Failed to fetch conversations by phone: ${req.params.phone}`,
-      error as Error,
-    );
-    res.status(500).json({
-      error: `Failed to fetch conversations by phone: ${req.params.phone}`,
-    });
-  }
-});
+  },
+);
 
 // Get lead by phone
-router.get("/byphone/:phone", async (req: Request, res: Response) => {
+router.get("/phone/:phone", async (req: Request, res: Response) => {
   try {
     const lead = await leadRepository.findByPhone(req.params.phone);
     if (!lead) {
@@ -144,5 +147,70 @@ router.delete("/:id", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to delete lead" });
   }
 });
+
+// Send template message to a lead by phone number
+router.post(
+  "/phone/:phone/send-template",
+  async (req: Request, res: Response) => {
+    try {
+      const { templateName, parameters, language } = req.body;
+
+      if (!templateName) {
+        res.status(400).json({ error: "Template name is required" });
+      }
+
+      const phone = req.params.phone;
+      const lead = await leadRepository.findByPhone(phone);
+      if (!lead) {
+        res.status(404).json({ error: "Lead not found" });
+      }
+
+      const result = await LeadsUtils.sendTemplateMessage(
+        phone,
+        templateName,
+        parameters || [],
+        language || "en",
+      );
+
+      res.json({ success: true, result });
+    } catch (error) {
+      LogsUtils.logError(
+        `Failed to send template message to phone: ${req.params.phone}`,
+        error as Error,
+      );
+      res.status(500).json({ error: "Failed to send template message" });
+    }
+  },
+);
+
+// Send free-form message to a lead by phone number
+router.post(
+  "/phone/:phone/send-message",
+  async (req: Request, res: Response) => {
+    try {
+      const { message } = req.body;
+
+      if (!message) {
+        res.status(400).json({ error: "Message text is required" });
+      }
+
+      const phone = req.params.phone;
+      const lead = await leadRepository.findByPhone(phone);
+      if (!lead) {
+        res.status(404).json({ error: "Lead not found" });
+      }
+
+      const result = await LeadsUtils.sendFreeFormMessage(phone, message);
+
+      res.json({ success: true, result });
+    } catch (error) {
+      LogsUtils.logError(
+        `Failed to send message to phone: ${req.params.phone}`,
+        error as Error,
+      );
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  },
+);
 
 export default router;
