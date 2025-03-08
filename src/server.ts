@@ -84,6 +84,8 @@ app.get("/webhook", (req, res) => {
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
+  LogsUtils.logMessage(`Verifying webhook ${JSON.stringify(req.query)}`);
+
   // check the mode and token sent are correct
   if (mode === "subscribe" && token === EnvConfig.WEBHOOK_VERIFY_TOKEN) {
     // respond with 200 OK and challenge token from the request
