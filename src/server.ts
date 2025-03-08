@@ -47,6 +47,10 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+app.get("/test-failure", (req, res) => {
+  throw new Error("Test error");
+});
+
 // Main routes
 app.get("/", (req, res) => {
   res.sendStatus(403);
