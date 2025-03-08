@@ -7,6 +7,12 @@ export class ConversationView {
   lead_id?: number;
 
   @ViewColumn()
+  message_id?: number;
+
+  @ViewColumn()
+  media_id?: number;
+
+  @ViewColumn()
   lead_name?: string;
 
   @ViewColumn()

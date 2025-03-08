@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
-import { MessageDirection } from "../typescript/interfaces";
+import { MessageDirection, MessageType } from "../typescript/interfaces";
 
 @Entity("messages")
 export class Message {
@@ -34,4 +34,13 @@ export class Message {
 
   @Column({ name: "wa_id", nullable: false, length: 255 })
   wa_id?: string;
+
+  @Column({ name: "wa_response_id", length: 255 })
+  wa_response_id?: string;
+
+  @Column({ name: "type", type: "enum", enum: MessageType })
+  type?: string;
+
+  @Column({ name: "media_id", type: "varchar", length: 255 })
+  media_id?: string;
 }

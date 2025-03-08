@@ -83,3 +83,11 @@ export enum MessageDirection {
   INCOMING = "incoming",
   OUTGOING = "outgoing",
 }
+
+export enum MessageType {
+  BUTTON = "button",
+  IMAGE = "image",
+  VIDEO = "video",
+  REACTION = "reaction",
+  TEXT = "text",
+}

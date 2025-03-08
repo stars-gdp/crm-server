@@ -21,16 +21,17 @@
             ],
             "messages": [
               {
+                "context": {
+                  "from": "15551651728",
+                  "id": "wamid.HBgMOTcyNTQ2MjUzMTA2FQIAERgSREY5RjNEMzQyOEM1M0QwMTM2AA=="
+                },
                 "from": "972546253106",
-                "id": "wamid.HBgMOTcyNTQ2MjUzMTA2FQIAEhgUM0FENzJEN0Q0MzBCQjdBRUMwMzUA",
-                "timestamp": "1741376660",
-                "type": "image",
-                "image": {
-                  "caption": "Image with text",
-                  "mime_type": "image/jpeg",
-                  "sha256": "uMeef43aPBUoXctoeqe4v/6Pma6uh3xNsER0hYM/MMo=",
-                  "id": "953692293564186"
-                }
+                "id": "wamid.HBgMOTcyNTQ2MjUzMTA2FQIAEhgUM0E0NjIzNkRDRDM4NTc5MzlGNjIA",
+                "timestamp": "1741436770",
+                "text": {
+                  "body": "How about talking?"
+                },
+                "type": "text"
               }
             ]
           },

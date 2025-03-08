@@ -8,6 +8,7 @@ import EnvConfig from "./config/env.config";
 import LogsUtils from "./utils/logs.utils";
 import { initializeDatabase } from "./config/database.config";
 import apiRoutes from "./routes";
+import MessagesUtils from "./utils/messages.utils";
 
 // Initialize Express app
 const app = express();
@@ -52,6 +53,29 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api", apiRoutes);
+
+app.post("/webhook", (req, res) => {
+  try {
+    // check if the webhook request contains a message
+    // details on WhatsApp text message payload: https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks/payload-examples#text-messages
+    const message = req.body.entry?.[0]?.changes[0]?.value?.messages?.[0];
+    LogsUtils.logMessage(JSON.stringify(message));
+
+    if (!message) {
+      res.sendStatus(200);
+      return;
+    }
+
+    MessagesUtils.processIncomingMessage(
+      req.body.entry?.[0]?.changes[0]?.value,
+    );
+
+    res.sendStatus(200);
+  } catch (error) {
+    LogsUtils.logError("Failed to process webhook message", error as Error);
+    res.sendStatus(500);
+  }
+});
 
 // accepts GET requests at the /webhook endpoint. You need this URL to setup webhook initially.
 // info on verification request payload: https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verification-requests

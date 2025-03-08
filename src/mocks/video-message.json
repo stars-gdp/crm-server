@@ -22,14 +22,14 @@
             "messages": [
               {
                 "from": "972546253106",
-                "id": "wamid.HBgMOTcyNTQ2MjUzMTA2FQIAEhgUM0FENzJEN0Q0MzBCQjdBRUMwMzUA",
-                "timestamp": "1741376660",
-                "type": "image",
-                "image": {
-                  "caption": "Image with text",
-                  "mime_type": "image/jpeg",
-                  "sha256": "uMeef43aPBUoXctoeqe4v/6Pma6uh3xNsER0hYM/MMo=",
-                  "id": "953692293564186"
+                "id": "wamid.HBgMOTcyNTQ2MjUzMTA2FQIAEhgUM0EyQTQwMzY5QkVFMjYwMjVDODAA",
+                "timestamp": "1741441380",
+                "type": "video",
+                "video": {
+                  "caption": "Video with text",
+                  "mime_type": "video/mp4",
+                  "sha256": "lcOQvnvmAos/eDb/k4SGb2qcL8/OPw7DCDp0DNwhsiU=",
+                  "id": "1170070721414433"
                 }
               }
             ]
