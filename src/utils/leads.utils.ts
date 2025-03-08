@@ -2,7 +2,6 @@ import WhatsappUtils from "./whatsapp.utils";
 import NewLeadsRepository from "../repositories/new-leads.repository";
 import LogsUtils from "./logs.utils";
 import { ITemplateParameter, MessageDirection } from "../typescript/interfaces";
-import { TemplatesConfig } from "../config/templates_config";
 import MessagesUtils from "./messages.utils";
 
 class LeadsUtils {
@@ -15,7 +14,7 @@ class LeadsUtils {
         ];
         const wa_message = await WhatsappUtils.sendTemplateWithParams(
           lead.lead_phone!,
-          TemplatesConfig.lb1.name,
+          "lb_1",
           params,
           "en",
         );
@@ -24,7 +23,7 @@ class LeadsUtils {
           wa_message,
           lead.lead_phone!,
           MessageDirection.OUTGOING,
-          TemplatesConfig.lb1.name,
+          "lb_1",
           "",
           params,
         );
