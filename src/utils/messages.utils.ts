@@ -1,4 +1,3 @@
-// src/utils/messages.utils.ts
 import MessagesRepository from "../repositories/messages.repository";
 import {
   ITemplateParameter,
@@ -7,12 +6,7 @@ import {
 } from "../typescript/interfaces";
 import TemplateRepository from "../repositories/template.repository";
 import LogsUtils from "./logs.utils";
-import { LeadRepository } from "../repositories/lead.repository"; // Add this import
-import LeadsUtils from "./leads.utils";
-import SocketUtils from "./socket.utils"; // Add this import
-
-// Create an instance of LeadRepository
-const leadRepository = new LeadRepository();
+import SocketUtils from "./socket.utils";
 
 class MessagesUtils {
   async processIncomingMessage(wa_message: any) {
@@ -22,78 +16,16 @@ class MessagesUtils {
 
     switch (message.type) {
       case MessageType.TEXT:
-        // Check if this is an interest message
-        if (
-          message.text.body.toLowerCase().includes("interested") &&
-          message.text.body
-            .toLowerCase()
-            .includes("global dropshipping project")
-        ) {
-          try {
-            // Check if lead already exists
-            const existingLead = await leadRepository.findByPhone(phone);
-
-            if (!existingLead) {
-              // Extract contact name from the message metadata
-              const contactName =
-                wa_message.contacts?.[0]?.profile?.name || "New Lead";
-
-              const currentDate = new Date();
-
-              // Create new lead
-              const newLead = await leadRepository.create({
-                lead_name: contactName,
-                lead_phone: phone,
-                opted_out: false,
-                fu_bom_sent: false,
-                fu_bom_confirmed: false,
-                fu2_bom_sent: false,
-                fu_bit_sent: false,
-                fu2_bit_sent: false,
-                created_at: currentDate,
-              });
-
-              await this.saveMessageToDb(
-                wa_message,
-                phone,
-                MessageDirection.INCOMING,
-                "",
-                message.text.body,
-                undefined,
-                contextId,
-                MessageType.TEXT,
-              );
-
-              // Send lb_2 template with no parameters
-              await LeadsUtils.sendTemplateMessage(phone, "lb_2", [], "en");
-
-              LogsUtils.logMessage(
-                `Created new lead from interest message and sent lb_2: ${contactName} (${phone})`,
-              );
-            } else {
-              // Lead already exists
-              LogsUtils.logMessage(
-                `Received interest message from existing lead: ${existingLead.lead_name} (${phone})`,
-              );
-            }
-          } catch (error) {
-            LogsUtils.logError(
-              `Error processing interest message from ${phone}`,
-              error as Error,
-            );
-          }
-        } else {
-          await this.saveMessageToDb(
-            wa_message,
-            phone,
-            MessageDirection.INCOMING,
-            "",
-            message.text.body,
-            undefined,
-            contextId,
-            MessageType.TEXT,
-          );
-        }
+        await this.saveMessageToDb(
+          wa_message,
+          phone,
+          MessageDirection.INCOMING,
+          "",
+          message.text.body,
+          undefined,
+          contextId,
+          MessageType.TEXT,
+        );
         break;
       case MessageType.REACTION:
         await this.saveMessageToDb(
@@ -178,6 +110,7 @@ class MessagesUtils {
           );
         });
       }
+
       const messageData = {
         lead_phone: phone,
         direction: direction,
@@ -190,14 +123,16 @@ class MessagesUtils {
         timestamp: timestamp,
       };
 
-      await MessagesRepository.create(messageData);
-
       // Save message to database
       const savedMessage = await MessagesRepository.create(messageData);
 
       // Notify connected clients about the new message (both incoming and outgoing)
       SocketUtils.notifyNewMessage(phone, savedMessage);
+
+      return savedMessage;
     }
+
+    return null;
   }
 }
 
