@@ -182,6 +182,17 @@ class MessagesUtils {
             LogsUtils.logMessage(
               `Updated lead record for ${phone}: BIT=${BitStatus.BIT}, date=${bitDateUTC.toISOString()}`,
             );
+
+            await this.saveMessageToDb(
+              wa_message,
+              phone,
+              MessageDirection.INCOMING,
+              "",
+              message.text.body,
+              undefined,
+              contextId,
+              MessageType.TEXT,
+            );
           } catch (error) {
             LogsUtils.logError(
               `Error processing bit2025 code from ${phone}`,
