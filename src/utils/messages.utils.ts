@@ -333,6 +333,16 @@ class MessagesUtils {
         const timeParts = timeString.split(":");
         bomDateIST.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0);
 
+        const todayIST = new Date();
+        // Convert today to IST (UTC+5:30)
+        todayIST.setHours(todayIST.getHours() + 5);
+        todayIST.setMinutes(todayIST.getMinutes() + 30);
+
+        const isToday =
+          bomDateIST.getDate() === todayIST.getDate() &&
+          bomDateIST.getMonth() === todayIST.getMonth() &&
+          bomDateIST.getFullYear() === todayIST.getFullYear();
+
         // Convert from IST to UTC (IST is UTC+5:30)
         // We need to subtract 5 hours and 30 minutes to get UTC time
         const bomDate = new Date(bomDateIST.getTime());
@@ -343,6 +353,8 @@ class MessagesUtils {
         await leadRepository.update(lead.id!, {
           bom_text: BomStatus.BOM,
           bom_date: bomDate,
+          fu_bom_sent: isToday,
+          fu_bom_confirmed: isToday,
         });
 
         LogsUtils.logMessage(
