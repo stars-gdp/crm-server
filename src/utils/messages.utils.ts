@@ -7,6 +7,11 @@ import {
 import TemplateRepository from "../repositories/template.repository";
 import LogsUtils from "./logs.utils";
 import SocketUtils from "./socket.utils";
+import LeadsUtils from "./leads.utils";
+import { LeadRepository } from "../repositories/lead.repository";
+
+// Create an instance of LeadRepository
+const leadRepository = new LeadRepository();
 
 class MessagesUtils {
   async processIncomingMessage(wa_message: any) {
@@ -16,16 +21,78 @@ class MessagesUtils {
 
     switch (message.type) {
       case MessageType.TEXT:
-        await this.saveMessageToDb(
-          wa_message,
-          phone,
-          MessageDirection.INCOMING,
-          "",
-          message.text.body,
-          undefined,
-          contextId,
-          MessageType.TEXT,
-        );
+        // Check if this is an interest message
+        if (
+          message.text.body.toLowerCase().includes("interested") &&
+          message.text.body
+            .toLowerCase()
+            .includes("global dropshipping project")
+        ) {
+          try {
+            // Check if lead already exists
+            const existingLead = await leadRepository.findByPhone(phone);
+
+            if (!existingLead) {
+              // Extract contact name from the message metadata
+              const contactName =
+                wa_message.contacts?.[0]?.profile?.name || "New Lead";
+
+              const currentDate = new Date();
+
+              // Create new lead
+              await leadRepository.create({
+                lead_name: contactName,
+                lead_phone: phone,
+                opted_out: false,
+                fu_bom_sent: false,
+                fu_bom_confirmed: false,
+                fu2_bom_sent: false,
+                fu_bit_sent: false,
+                fu2_bit_sent: false,
+                created_at: currentDate,
+              });
+
+              await this.saveMessageToDb(
+                wa_message,
+                phone,
+                MessageDirection.INCOMING,
+                "",
+                message.text.body,
+                undefined,
+                contextId,
+                MessageType.TEXT,
+              );
+
+              // Send lb_2 template with no parameters
+              await LeadsUtils.sendTemplateMessage(phone, "lb_2", [], "en");
+
+              LogsUtils.logMessage(
+                `Created new lead from interest message and sent lb_2: ${contactName} (${phone})`,
+              );
+            } else {
+              // Lead already exists
+              LogsUtils.logMessage(
+                `Received interest message from existing lead: ${existingLead.lead_name} (${phone})`,
+              );
+            }
+          } catch (error) {
+            LogsUtils.logError(
+              `Error processing interest message from ${phone}`,
+              error as Error,
+            );
+          }
+        } else {
+          await this.saveMessageToDb(
+            wa_message,
+            phone,
+            MessageDirection.INCOMING,
+            "",
+            message.text.body,
+            undefined,
+            contextId,
+            MessageType.TEXT,
+          );
+        }
         break;
       case MessageType.REACTION:
         await this.saveMessageToDb(
