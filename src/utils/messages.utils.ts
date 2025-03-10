@@ -4,6 +4,7 @@ import {
   MessageDirection,
   MessageType,
   BomStatus,
+  BitStatus,
 } from "../typescript/interfaces";
 import TemplateRepository from "../repositories/template.repository";
 import LogsUtils from "./logs.utils";
@@ -93,6 +94,97 @@ class MessagesUtils {
           } catch (error) {
             LogsUtils.logError(
               `Error processing interest message from ${phone}`,
+              error as Error,
+            );
+          }
+        } else if (
+          message.text.body
+            .replace(/\s+/g, "")
+            .toLowerCase()
+            .includes("bit2025")
+        ) {
+          try {
+            // Get the lead record
+            const lead = await leadRepository.findByPhone(phone);
+            if (!lead) {
+              LogsUtils.logError(
+                `No lead found for ${phone} when processing bit2025 code`,
+                new Error("Lead not found"),
+              );
+              return;
+            }
+
+            // Get the next BIT date
+            const bitDateString = BookUtils.getNextBitDate();
+            LogsUtils.logMessage(
+              `User ${phone} sent bit2025 code, sending after_code_bom with date: ${bitDateString}`,
+            );
+
+            // Create template parameter for the BIT date
+            const params: ITemplateParameter[] = [
+              { parameter_name: "slot", type: "TEXT", text: bitDateString },
+            ];
+
+            // Send after_code_bom template with the date parameter
+            await LeadsUtils.sendTemplateMessage(
+              phone,
+              "after_code_bom",
+              params,
+              "en",
+            );
+
+            // Parse the date from bitDateString
+            // Format example: "Sunday, 16.03.25, 17:30 IST"
+            const dateMatch = bitDateString.match(/(\d{2}\.\d{2}\.\d{2})/);
+            const timeMatch = bitDateString.match(/(\d{2}:\d{2})/);
+
+            if (!dateMatch || !timeMatch) {
+              LogsUtils.logError(
+                `Could not parse date from ${bitDateString}`,
+                new Error("Invalid date format"),
+              );
+              return;
+            }
+
+            const dateString = dateMatch[1]; // "16.03.25"
+            const timeString = timeMatch[1]; // "17:30"
+
+            // Parse the date - format is DD.MM.YY
+            const parts = dateString.split(".");
+            // Note: JavaScript months are 0-indexed, so we subtract 1 from the month
+            const year = 2000 + parseInt(parts[2]); // Assuming 20xx years
+            const month = parseInt(parts[1]) - 1;
+            const day = parseInt(parts[0]);
+
+            // Create a date object for the BIT time in IST
+            const bitDateIST = new Date(year, month, day);
+
+            // Set the time part - format is HH:MM
+            const timeParts = timeString.split(":");
+            bitDateIST.setHours(
+              parseInt(timeParts[0]),
+              parseInt(timeParts[1]),
+              0,
+            );
+
+            // Convert from IST to UTC (IST is UTC+5:30)
+            // We need to subtract 5 hours and 30 minutes to get UTC time
+            const bitDateUTC = new Date(bitDateIST.getTime());
+            bitDateUTC.setHours(bitDateIST.getHours() - 5);
+            bitDateUTC.setMinutes(bitDateIST.getMinutes() - 30);
+
+            // Update the lead record
+            await leadRepository.update(lead.id!, {
+              bit_text: BitStatus.BIT,
+              bit_date: bitDateUTC,
+            });
+
+            LogsUtils.logMessage(
+              `Updated lead record for ${phone}: BIT=${BitStatus.BIT}, date=${bitDateUTC.toISOString()}`,
+            );
+          } catch (error) {
+            LogsUtils.logError(
+              `Error processing bit2025 code from ${phone}`,
               error as Error,
             );
           }
