@@ -9,6 +9,7 @@ import LogsUtils from "./utils/logs.utils";
 import { initializeDatabase } from "./config/database.config";
 import apiRoutes from "./routes";
 import MessagesUtils from "./utils/messages.utils";
+import SocketUtils from "./utils/socket.utils"; // Import Socket.IO utils
 
 // Initialize Express app
 const app = express();
@@ -121,6 +122,9 @@ app.use(
 
 // Create HTTP server
 const server = createServer(app);
+
+// Initialize Socket.IO
+SocketUtils.initialize(server);
 
 // Start server
 // Initialize database and start server
