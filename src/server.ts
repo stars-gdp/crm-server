@@ -9,7 +9,7 @@ import LogsUtils from "./utils/logs.utils";
 import { initializeDatabase } from "./config/database.config";
 import apiRoutes from "./routes";
 import MessagesUtils from "./utils/messages.utils";
-import SocketUtils from "./utils/socket.utils"; // Import Socket.IO utils
+import SocketUtils from "./utils/socket.utils";
 
 // Initialize Express app
 const app = express();
