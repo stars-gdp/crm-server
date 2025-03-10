@@ -70,6 +70,16 @@ class MessagesUtils {
                 `Created new lead from interest message and sent lb_2: ${contactName} (${phone})`,
               );
             } else {
+              await this.saveMessageToDb(
+                wa_message,
+                phone,
+                MessageDirection.INCOMING,
+                "",
+                message.text.body,
+                undefined,
+                contextId,
+                MessageType.TEXT,
+              );
               // Lead already exists
               LogsUtils.logMessage(
                 `Received interest message from existing lead: ${existingLead.lead_name} (${phone})`,
