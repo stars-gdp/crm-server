@@ -80,6 +80,9 @@ export class Lead {
   @Column({ type: "boolean" })
   fu2_bit_sent?: boolean;
 
+  @Column({ type: "boolean" })
+  yes_bom_pressed?: boolean;
+
   @CreateDateColumn()
   created_at?: Date;
 }
