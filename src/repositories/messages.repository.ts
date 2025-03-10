@@ -15,6 +15,12 @@ class MessagesRepository {
     });
   }
 
+  async findByWaId(waId: string): Promise<Message | null> {
+    return this.repository.findOne({
+      where: { wa_id: waId },
+    });
+  }
+
   async create(messageData: Partial<Message>): Promise<Message> {
     const message = this.repository.create(messageData);
     return this.repository.save(message);
