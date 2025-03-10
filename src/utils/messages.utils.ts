@@ -205,6 +205,16 @@ class MessagesUtils {
         return;
       }
 
+      // Get the lead record
+      const lead = await leadRepository.findByPhone(phone);
+      if (!lead) {
+        LogsUtils.logError(
+          `No lead found for ${phone}`,
+          new Error("Lead not found"),
+        );
+        return;
+      }
+
       // Now we can determine which step in the funnel this button press belongs to
       if (
         originalMessage.template_name === "lb_2" &&
@@ -295,7 +305,6 @@ class MessagesUtils {
         await LeadsUtils.sendTemplateMessage(phone, "lb_6", [], "en");
 
         // Update lead record in database
-        const lead = await leadRepository.findByPhone(phone);
         if (!lead) {
           LogsUtils.logError(
             `No lead found for ${phone}`,
@@ -365,6 +374,48 @@ class MessagesUtils {
         selectedTimeSlots.delete(`${phone}_slot_1`);
         selectedTimeSlots.delete(`${phone}_slot_2`);
         selectedTimeSlots.delete(`${phone}_selected`);
+      }
+      // Handle the fu_1 template confirmation
+      else if (
+        originalMessage.template_name === "fu_1" &&
+        buttonPayload === "Confirm"
+      ) {
+        LogsUtils.logMessage(
+          `User ${phone} confirmed BOM attendance in fu_1 follow-up`,
+        );
+
+        // Update lead record to mark fu_bom_confirmed as true
+        await leadRepository.update(lead.id!, {
+          fu_bom_confirmed: true,
+        });
+      }
+      // Handle the fu_2 template confirmation
+      else if (
+        originalMessage.template_name === "fu_2" &&
+        buttonPayload === "YES"
+      ) {
+        LogsUtils.logMessage(
+          `User ${phone} confirmed BOM attendance in fu_2 follow-up`,
+        );
+
+        // Update lead record to mark fu2_bom_confirmed as true
+        await leadRepository.update(lead.id!, {
+          fu2_bom_confirmed: true,
+        });
+      }
+      // Handle the 15_mins_before_bom template confirmation
+      else if (
+        originalMessage.template_name === "15_mins_before_bom" &&
+        buttonPayload === "Yes"
+      ) {
+        LogsUtils.logMessage(
+          `User ${phone} confirmed attendance in 15-minute reminder`,
+        );
+
+        // Update lead record to mark yes_bom_pressed as true
+        await leadRepository.update(lead.id!, {
+          yes_bom_pressed: true,
+        });
       }
     } catch (error) {
       LogsUtils.logError(

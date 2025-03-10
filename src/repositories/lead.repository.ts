@@ -38,4 +38,14 @@ export class LeadRepository {
     const result = await this.repository.delete(id);
     return result.affected !== 0;
   }
+
+  /**
+   * Execute a custom SQL query and return Lead objects
+   * @param query SQL query to execute
+   * @param parameters Query parameters
+   * @returns Array of Lead objects
+   */
+  async findAllByQuery(query: string, parameters: any[] = []): Promise<Lead[]> {
+    return this.repository.query(query, parameters);
+  }
 }

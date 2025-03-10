@@ -75,6 +75,9 @@ export class Lead {
   fu2_bom_sent?: boolean;
 
   @Column({ type: "boolean" })
+  fu2_bom_confirmed?: boolean;
+
+  @Column({ type: "boolean" })
   fu_bit_sent?: boolean;
 
   @Column({ type: "boolean" })
