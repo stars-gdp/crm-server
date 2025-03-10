@@ -343,7 +343,6 @@ class MessagesUtils {
         await leadRepository.update(lead.id!, {
           bom_text: BomStatus.BOM,
           bom_date: bomDate,
-          fu_bom_confirmed: true,
         });
 
         LogsUtils.logMessage(
