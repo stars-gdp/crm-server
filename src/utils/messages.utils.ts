@@ -125,6 +125,17 @@ class MessagesUtils {
               { parameter_name: "slot", type: "TEXT", text: bitDateString },
             ];
 
+            await this.saveMessageToDb(
+              wa_message,
+              phone,
+              MessageDirection.INCOMING,
+              "",
+              message.text.body,
+              undefined,
+              contextId,
+              MessageType.TEXT,
+            );
+
             // Send after_code_bom template with the date parameter
             await LeadsUtils.sendTemplateMessage(
               phone,
@@ -181,17 +192,6 @@ class MessagesUtils {
 
             LogsUtils.logMessage(
               `Updated lead record for ${phone}: BIT=${BitStatus.BIT}, date=${bitDateUTC.toISOString()}`,
-            );
-
-            await this.saveMessageToDb(
-              wa_message,
-              phone,
-              MessageDirection.INCOMING,
-              "",
-              message.text.body,
-              undefined,
-              contextId,
-              MessageType.TEXT,
             );
           } catch (error) {
             LogsUtils.logError(
