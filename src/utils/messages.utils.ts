@@ -326,12 +326,18 @@ class MessagesUtils {
         const month = parseInt(parts[1]) - 1;
         const day = parseInt(parts[0]);
 
-        // Create a date object for the selected time
-        const bomDate = new Date(year, month, day);
+        // Create a date object for the selected time in IST
+        const bomDateIST = new Date(year, month, day);
 
         // Set the time part - format is HH:MM
         const timeParts = timeString.split(":");
-        bomDate.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0);
+        bomDateIST.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0);
+
+        // Convert from IST to UTC (IST is UTC+5:30)
+        // We need to subtract 5 hours and 30 minutes to get UTC time
+        const bomDate = new Date(bomDateIST.getTime());
+        bomDate.setHours(bomDateIST.getHours() - 5);
+        bomDate.setMinutes(bomDateIST.getMinutes() - 30);
 
         // Update the lead record
         await leadRepository.update(lead.id!, {
