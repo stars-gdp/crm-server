@@ -416,6 +416,18 @@ class MessagesUtils {
         await leadRepository.update(lead.id!, {
           yes_bom_pressed: true,
         });
+      } else if (
+        originalMessage.template_name === "book_bom" &&
+        buttonPayload === "I'm in"
+      ) {
+        LogsUtils.logMessage(
+          `User ${phone} confirmed BOM attendance with "I'm in" button`,
+        );
+
+        // Update lead record to set bom_text to Show
+        await leadRepository.update(lead.id!, {
+          bom_text: BomStatus.Show,
+        });
       }
     } catch (error) {
       LogsUtils.logError(
