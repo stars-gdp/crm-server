@@ -8,7 +8,8 @@ import {
 import TemplateRepository from "../repositories/template.repository";
 import LogsUtils from "./logs.utils";
 import { LeadRepository } from "../repositories/lead.repository"; // Add this import
-import LeadsUtils from "./leads.utils"; // Add this import
+import LeadsUtils from "./leads.utils";
+import SocketUtils from "./socket.utils"; // Add this import
 
 // Create an instance of LeadRepository
 const leadRepository = new LeadRepository();
@@ -177,7 +178,7 @@ class MessagesUtils {
           );
         });
       }
-      await MessagesRepository.create({
+      const messageData = {
         lead_phone: phone,
         direction: direction,
         template_name: templateName,
@@ -187,7 +188,15 @@ class MessagesUtils {
         type: type,
         media_id: mediaId,
         timestamp: timestamp,
-      });
+      };
+
+      await MessagesRepository.create(messageData);
+
+      // Save message to database
+      const savedMessage = await MessagesRepository.create(messageData);
+
+      // Notify connected clients about the new message (both incoming and outgoing)
+      SocketUtils.notifyNewMessage(phone, savedMessage);
     }
   }
 }
