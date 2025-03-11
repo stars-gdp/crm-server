@@ -329,7 +329,7 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
     // - yes_bom_pressed is true
     // - bom_date is today
     const leads = await leadRepository.findAllByQuery(
-      "SELECT * FROM leads WHERE yes_bom_pressed = TRUE AND bom_date IS NOT NULL",
+      "SELECT * FROM leads WHERE yes_bom_pressed = TRUE and bom_text = 'BOM' AND bom_date IS NOT NULL",
     );
 
     // Filter leads where bom_date is today
