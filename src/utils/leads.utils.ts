@@ -16,7 +16,7 @@ class LeadsUtils {
           lead.lead_phone!,
           "lb_1",
           params,
-          "en",
+          "en_US",
         );
 
         await MessagesUtils.saveMessageToDb(
@@ -38,7 +38,7 @@ class LeadsUtils {
     phoneNumber: string,
     templateName: string,
     parameters: ITemplateParameter[] = [],
-    language: string = "en",
+    language: string = "en_US",
   ): Promise<any> {
     try {
       // Send template message via WhatsApp API

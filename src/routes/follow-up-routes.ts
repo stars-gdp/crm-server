@@ -103,7 +103,7 @@ router.post("/send-fu1", async (req: Request, res: Response) => {
           lead.lead_phone,
           "fu_1",
           params,
-          "en",
+          "en_US",
         );
 
         // Update lead record to mark fu_bom_sent as true
@@ -186,7 +186,7 @@ router.post("/send-fu2", async (req: Request, res: Response) => {
           lead.lead_phone,
           "fu_2",
           params,
-          "en",
+          "en_US",
         );
 
         // Update lead record to mark fu2_bom_sent as true
@@ -275,7 +275,7 @@ router.post("/send-15min-reminder", async (req: Request, res: Response) => {
           lead.lead_phone,
           "15_mins_before_bom",
           [], // No parameters needed for this template
-          "en",
+          "en_US",
         );
 
         results.push({
@@ -356,7 +356,7 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
           lead.lead_phone,
           "book_bom",
           params,
-          "en",
+          "en_US",
         );
 
         results.push({

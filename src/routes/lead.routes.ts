@@ -169,7 +169,7 @@ router.post(
         phone,
         templateName,
         parameters || [],
-        language || "en",
+        language || "en_US",
       );
 
       res.json({ success: true, result });

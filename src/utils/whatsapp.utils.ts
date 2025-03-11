@@ -87,14 +87,14 @@ class WhatsappUtils {
    * Send a template message to a recipient
    * @param to Recipient's phone number with country code
    * @param templateName Name of the template to use
-   * @param language Language code (default: 'en')
+   * @param language Language code (default: 'en_US')
    * @param components Template components (header, body, buttons)
    * @returns Promise with the API response
    */
   async sendTemplateMessage(
     to: string,
     templateName: string,
-    language: string = "en",
+    language: string = "en_US",
     components: any[] = [],
   ): Promise<any> {
     try {
@@ -139,7 +139,7 @@ class WhatsappUtils {
     to: string,
     templateName: string,
     parameters: ITemplateParameter[] = [],
-    language: string = "en",
+    language: string = "en_US",
   ): Promise<any> {
     // Create the components structure with parameters
     const components = [];

@@ -70,7 +70,7 @@ class MessagesUtils {
               );
 
               // Send lb_2 template with no parameters
-              await LeadsUtils.sendTemplateMessage(phone, "lb_2", [], "en");
+              await LeadsUtils.sendTemplateMessage(phone, "lb_2", [], "en_US");
 
               LogsUtils.logMessage(
                 `Created new lead from interest message and sent lb_2: ${contactName} (${phone})`,
@@ -141,7 +141,7 @@ class MessagesUtils {
               phone,
               "after_code_bom",
               params,
-              "en",
+              "en_US",
             );
 
             // Parse the date from bitDateString
@@ -327,7 +327,7 @@ class MessagesUtils {
         LogsUtils.logMessage(
           `User ${phone} pressed Interested in lb_2, sending lb_3`,
         );
-        await LeadsUtils.sendTemplateMessage(phone, "lb_3", [], "en");
+        await LeadsUtils.sendTemplateMessage(phone, "lb_3", [], "en_US");
       } else if (
         originalMessage.template_name === "lb_3" &&
         buttonPayload === "Yes"
@@ -358,7 +358,7 @@ class MessagesUtils {
         selectedTimeSlots.set(`${phone}_slot_2`, bomDates[1]);
 
         // Send lb_4 template with the time slot parameters
-        await LeadsUtils.sendTemplateMessage(phone, "lb_4", params, "en");
+        await LeadsUtils.sendTemplateMessage(phone, "lb_4", params, "en_US");
       } else if (originalMessage.template_name === "lb_4") {
         // User selected a time slot from lb_4 - determine which slot and save it
         let selectedSlot: string | null = null;
@@ -385,7 +385,7 @@ class MessagesUtils {
         );
 
         // Send lb_5 template
-        await LeadsUtils.sendTemplateMessage(phone, "lb_5", [], "en");
+        await LeadsUtils.sendTemplateMessage(phone, "lb_5", [], "en_US");
       } else if (
         originalMessage.template_name === "lb_5" &&
         buttonPayload === "Yes"
@@ -405,7 +405,7 @@ class MessagesUtils {
         );
 
         // Send lb_6 template
-        await LeadsUtils.sendTemplateMessage(phone, "lb_6", [], "en");
+        await LeadsUtils.sendTemplateMessage(phone, "lb_6", [], "en_US");
 
         // Update lead record in database
         if (!lead) {
