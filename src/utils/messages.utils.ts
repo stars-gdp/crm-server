@@ -318,8 +318,11 @@ class MessagesUtils {
         return;
       }
 
-      // Now we can determine which step in the funnel this button press belongs to
-      if (
+      if (originalMessage.template_name === "lb_1" && buttonPayload === "Yes") {
+        // User pressed "Yes" in lb_1 - send lb_2
+        LogsUtils.logMessage(`User ${phone} pressed Yes in lb_1, sending lb_2`);
+        await LeadsUtils.sendTemplateMessage(phone, "lb_2", [], "en_US");
+      } else if (
         originalMessage.template_name === "lb_2" &&
         buttonPayload === "Interested"
       ) {
