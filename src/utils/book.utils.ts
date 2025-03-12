@@ -14,7 +14,8 @@ class BookUtils {
   /**
    * Find the next available BOM meeting dates
    * Returns ["Today, DATE", "Tomorrow, DATE"] if current time < 11:00 IST
-   * Returns ["Tomorrow, DATE", "Day after tomorrow, DATE"] if current time >= 11:00 IST
+   * Returns ["Tomorrow, DATE", "Day after tomorrow, DATE"] if 11:00 IST <= current time < 16:00 IST
+   * Returns ["Day after tomorrow, DATE", "DATE"] if current time >= 16:00 IST (with no prefix for the second date)
    *
    * BOM meetings: Monday-Saturday at 16:30 IST, Sunday at 15:30 IST
    */
@@ -22,18 +23,27 @@ class BookUtils {
     // Convert current time to IST for cutoff check
     const istNow = dayjs().tz(this.IST_TIMEZONE);
 
-    // Check if before 11:00 IST cutoff
-    const isBeforeCutoff = istNow.hour() < 11;
+    // Check time against cutoffs
+    const isBeforeFirstCutoff = istNow.hour() < 11;
+    const isBeforeSecondCutoff = istNow.hour() < 16;
 
-    if (isBeforeCutoff) {
+    if (isBeforeFirstCutoff) {
+      // Before 11:00 IST
       return [
         this.formatBomDate(istNow, 0, "Today"),
         this.formatBomDate(istNow, 1, "Tomorrow"),
       ];
-    } else {
+    } else if (isBeforeSecondCutoff) {
+      // Between 11:00 IST and 16:00 IST
       return [
         this.formatBomDate(istNow, 1, "Tomorrow"),
         this.formatBomDate(istNow, 2, "Day after tomorrow"),
+      ];
+    } else {
+      // After 16:00 IST
+      return [
+        this.formatBomDate(istNow, 2, "Day after tomorrow"),
+        this.formatBomDate(istNow, 3, ""), // No prefix for day after day after tomorrow
       ];
     }
   }
@@ -56,7 +66,7 @@ class BookUtils {
       .second(0);
 
     // Keep in IST timezone for display
-    return `${prefix}, ${meetingTime.format("DD.MM.YY, HH:mm")} IST`;
+    return `${!!prefix ? prefix + ", " : ""}${meetingTime.format("DD.MM.YY, HH:mm")} IST`;
   }
 
   /**
