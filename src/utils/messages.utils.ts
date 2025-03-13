@@ -362,7 +362,10 @@ class MessagesUtils {
 
         // Send lb_4 template with the time slot parameters
         await LeadsUtils.sendTemplateMessage(phone, "lb_4", params, "en_US");
-      } else if (originalMessage.template_name === "lb_4") {
+      } else if (
+        originalMessage.template_name === "lb_4" &&
+        buttonPayload !== "Stop promotions"
+      ) {
         // User selected a time slot from lb_4 - determine which slot and save it
         let selectedSlot: string | null = null;
 
@@ -533,6 +536,15 @@ class MessagesUtils {
         // Update lead record to set bom_text to Show
         await leadRepository.update(lead.id!, {
           bom_text: BomStatus.Show,
+        });
+      } else if (buttonPayload === "Stop promotions") {
+        LogsUtils.logMessage(
+          `User ${phone} opted out of promotions with "Stop promotions" button`,
+        );
+
+        // Update lead record to mark opted_out as true
+        await leadRepository.update(lead.id!, {
+          opted_out: true,
         });
       }
     } catch (error) {

@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "start": "NODE_ENV=development ts-node-dev --respawn --transpile-only src/server.ts"
+    "start": "NODE_ENV=development ts-node-dev --respawn --transpile-only src/server.ts",
+    "start-cron": "NODE_ENV=development ts-node-dev --respawn --transpile-only src/cron/runner.ts"
   },
   "dependencies": {
     "axios": "^1.8.1",
