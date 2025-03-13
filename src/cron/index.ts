@@ -54,9 +54,9 @@ export function initializeCronJobs(): void {
     "UTC",
   );
 
-  // For Sunday meetings (09:45 UTC)
+  // For Sunday meetings (09:30 UTC)
   const sundayReminderJob = new CronJob(
-    "45 9 * * 0", // 09:45 UTC on Sundays (0 = Sunday)
+    "30 9 * * 0", // 09:30 UTC on Sundays (0 = Sunday)
     () => {
       triggerFollowUp("send-15min-reminder");
     },
@@ -65,9 +65,9 @@ export function initializeCronJobs(): void {
     "UTC",
   );
 
-  // For Monday-Saturday meetings (10:45 UTC)
+  // For Monday-Saturday meetings (10:30 UTC)
   const weekdayReminderJob = new CronJob(
-    "45 10 * * 1-6", // 10:45 UTC Monday-Saturday (1-6)
+    "30 10 * * 1-6", // 10:30 UTC Monday-Saturday (1-6)
     () => {
       triggerFollowUp("send-15min-reminder");
     },
