@@ -10,6 +10,7 @@
   "dependencies": {
     "axios": "^1.8.1",
     "cors": "^2.8.5",
+    "cron": "^4.1.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dayjs": "^1.11.13",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
+    "@types/cron": "^2.4.3",
     "@types/express": "^5.0.0",
     "@types/fs-extra": "^11.0.4",
     "@types/morgan": "^1.9.9",
