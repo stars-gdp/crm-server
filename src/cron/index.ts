@@ -43,9 +43,9 @@ export function initializeCronJobs(): void {
     "UTC",
   );
 
-  // Second follow-up (fu2) at 09:00 UTC daily
+  // Second follow-up (fu2) at 08:00 UTC daily
   const fu2Job = new CronJob(
-    "0 9 * * *",
+    "0 8 * * *",
     () => {
       triggerFollowUp("send-fu2");
     },
@@ -54,9 +54,20 @@ export function initializeCronJobs(): void {
     "UTC",
   );
 
-  // 15-minute reminder at 10:45 UTC daily
-  const reminderJob = new CronJob(
-    "45 10 * * *",
+  // For Sunday meetings (09:45 UTC)
+  const sundayReminderJob = new CronJob(
+    "45 9 * * 0", // 09:45 UTC on Sundays (0 = Sunday)
+    () => {
+      triggerFollowUp("send-15min-reminder");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // For Monday-Saturday meetings (10:45 UTC)
+  const weekdayReminderJob = new CronJob(
+    "45 10 * * 1-6", // 10:45 UTC Monday-Saturday (1-6)
     () => {
       triggerFollowUp("send-15min-reminder");
     },
@@ -68,7 +79,8 @@ export function initializeCronJobs(): void {
   // Start all jobs
   fu1Job.start();
   fu2Job.start();
-  reminderJob.start();
+  weekdayReminderJob.start();
+  sundayReminderJob.start();
 
   LogsUtils.logMessage("All cron jobs started successfully");
 }
