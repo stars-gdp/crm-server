@@ -84,7 +84,13 @@ export class Lead {
   fu2_bit_sent?: boolean;
 
   @Column({ type: "boolean" })
+  yes_bom_sent?: boolean;
+
+  @Column({ type: "boolean" })
   yes_bom_pressed?: boolean;
+
+  @Column({ type: "boolean" })
+  link_bom_sent?: boolean;
 
   @CreateDateColumn()
   created_at?: Date;

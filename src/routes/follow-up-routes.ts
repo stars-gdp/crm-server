@@ -239,7 +239,7 @@ router.post("/send-15min-reminder", async (req: Request, res: Response) => {
     // - bom_date is today
     // - The time is approaching their BOM time (within 15-20 minutes)
     const leads = await leadRepository.findAllByQuery(
-      "SELECT * FROM leads WHERE fu2_bom_confirmed = TRUE AND bom_date IS NOT NULL",
+      "SELECT * FROM leads WHERE fu2_bom_confirmed = TRUE AND yes_bom_sent = FALSE AND bom_date IS NOT NULL",
     );
 
     const now = new Date();
@@ -277,6 +277,11 @@ router.post("/send-15min-reminder", async (req: Request, res: Response) => {
           [], // No parameters needed for this template
           "en_US",
         );
+
+        // Update lead record to mark yes_bom_sent as true
+        await leadRepository.update(lead.id!, {
+          yes_bom_sent: true,
+        });
 
         results.push({
           lead_id: lead.id,
@@ -329,7 +334,7 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
     // - yes_bom_pressed is true
     // - bom_date is today
     const leads = await leadRepository.findAllByQuery(
-      "SELECT * FROM leads WHERE yes_bom_pressed = TRUE and bom_text = 'BOM' AND bom_date IS NOT NULL",
+      "SELECT * FROM leads WHERE yes_bom_pressed = TRUE and link_bom_sent = FALSE and bom_text = 'BOM' AND bom_date IS NOT NULL",
     );
 
     // Filter leads where bom_date is today
@@ -358,6 +363,11 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
           params,
           "en_US",
         );
+
+        // Update lead record to mark link_bom_sent as true
+        await leadRepository.update(lead.id!, {
+          link_bom_sent: true,
+        });
 
         results.push({
           lead_id: lead.id,
