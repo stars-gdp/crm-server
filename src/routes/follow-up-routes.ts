@@ -1,8 +1,12 @@
-import { Router, Request, Response } from "express";
+import { Request, Response, Router } from "express";
 import { LeadRepository } from "../repositories/lead.repository";
 import LogsUtils from "../utils/logs.utils";
 import LeadsUtils from "../utils/leads.utils";
-import { ITemplateParameter } from "../typescript/interfaces";
+import {
+  BitStatus,
+  BomStatus,
+  ITemplateParameter,
+} from "../typescript/interfaces";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -367,6 +371,7 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
         // Update lead record to mark link_bom_sent as true
         await leadRepository.update(lead.id!, {
           link_bom_sent: true,
+          bom_text: BomStatus.Show,
         });
 
         results.push({
@@ -398,6 +403,97 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
     LogsUtils.logError("Failed to process Zoom link sending", error as Error);
     res.status(500).json({
       error: "Failed to process Zoom link sending",
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * Send book_bit template with Zoom link to leads with BIT meetings scheduled for today
+ * and update their bit_text status to "Show"
+ */
+router.post("/send-bit-zoom-link", async (req: Request, res: Response) => {
+  try {
+    // Validate request body
+    if (!req.body.zoom_link) {
+      res.status(400).json({ error: "Zoom link is required" });
+      return;
+    }
+
+    const zoomLink = req.body.zoom_link;
+
+    // Get all leads where:
+    // - bit_text is BIT (confirmed)
+    // - bit_date is today
+    // - fu2_bit_sent is true (received second follow-up)
+    const leads = await leadRepository.findAllByQuery(
+      "SELECT * FROM leads WHERE opted_out = FALSE AND bit_text = 'BIT' AND bit_date IS NOT NULL AND DATE(bit_date) = CURRENT_DATE AND fu2_bit_sent = TRUE",
+    );
+
+    // Filter leads where bit_date is today
+    const todayLeads = leads.filter(
+      (lead) => lead.bit_date && isToday(lead.bit_date),
+    );
+
+    const results = [];
+
+    // Process each lead
+    for (const lead of todayLeads) {
+      try {
+        if (!lead.lead_phone) {
+          continue;
+        }
+
+        // Create template parameters with the Zoom link
+        const params: ITemplateParameter[] = [
+          { parameter_name: "link", type: "TEXT", text: zoomLink },
+        ];
+
+        // Send the book_bit template with Zoom link (assuming this template exists)
+        const result = await LeadsUtils.sendTemplateMessage(
+          lead.lead_phone,
+          "bit",
+          params,
+          "en_US",
+        );
+
+        // Update lead record to change bit_text to "Show"
+        await leadRepository.update(lead.id!, {
+          bit_text: BitStatus.Show,
+        });
+
+        results.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          status: "success",
+          bit_date: formatDateInIST(lead.bit_date!),
+        });
+      } catch (error) {
+        LogsUtils.logError(
+          `Failed to send BIT Zoom link to lead ID: ${lead.id}`,
+          error as Error,
+        );
+        results.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          status: "error",
+          error: (error as Error).message,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      processed_count: todayLeads.length,
+      results,
+    });
+  } catch (error) {
+    LogsUtils.logError(
+      "Failed to process BIT Zoom link sending",
+      error as Error,
+    );
+    res.status(500).json({
+      error: "Failed to process BIT Zoom link sending",
       message: (error as Error).message,
     });
   }
@@ -655,6 +751,187 @@ router.post("/send-no-code-bom", async (req: Request, res: Response) => {
     );
     res.status(500).json({
       error: "Failed to process bulk no_code_bom send",
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * Send fu_bit_1 template to leads with BIT scheduled for tomorrow (Sunday)
+ * who haven't received the bit follow-up yet
+ */
+router.post("/send-fu-bit1", async (req: Request, res: Response) => {
+  try {
+    // Get all leads where:
+    // - fu_bit_sent is false
+    // - bit_text is not null
+    // - bit_date is tomorrow
+    const leads = await leadRepository.findAllByQuery(
+      "SELECT * FROM leads WHERE opted_out = FALSE AND fu_bit_sent = FALSE AND bit_text IS NOT NULL AND bit_date IS NOT NULL AND DATE(bit_date) = DATE_ADD(CURRENT_DATE, INTERVAL 1 DAY)",
+    );
+
+    const results = [];
+
+    // Filter leads where bit_date is tomorrow (in case the SQL query isn't supported by all DB providers)
+    const tomorrowLeads = leads.filter(
+      (lead) => lead.bit_date && isTomorrow(lead.bit_date),
+    );
+
+    // Process each lead
+    for (const lead of tomorrowLeads) {
+      try {
+        if (!lead.lead_phone) {
+          continue;
+        }
+
+        // Format the BIT date in IST timezone
+        const bitDateIST = formatDateInIST(lead.bit_date!);
+
+        // Create template parameters
+        const params: ITemplateParameter[] = [
+          { parameter_name: "slot", type: "TEXT", text: bitDateIST },
+        ];
+
+        // Send the fu_bit_1 template
+        const result = await LeadsUtils.sendTemplateMessage(
+          lead.lead_phone,
+          "fu_bit_1",
+          params,
+          "en_US",
+        );
+
+        // Update lead record to mark fu_bit_sent as true
+        await leadRepository.update(lead.id!, {
+          fu_bit_sent: true,
+        });
+
+        results.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          status: "success",
+          bit_date: bitDateIST,
+        });
+      } catch (error) {
+        LogsUtils.logError(
+          `Failed to send fu_bit_1 to lead ID: ${lead.id}`,
+          error as Error,
+        );
+        results.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          status: "error",
+          error: (error as Error).message,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      processed_count: tomorrowLeads.length,
+      results,
+    });
+  } catch (error) {
+    LogsUtils.logError("Failed to process fu_bit_1 follow-ups", error as Error);
+    res.status(500).json({
+      error: "Failed to process fu_bit_1 follow-ups",
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * Send fu_bit_2 template to leads with BIT scheduled for today
+ * who have received the first BIT follow-up but not the second one
+ */
+router.post("/send-fu-bit2", async (req: Request, res: Response) => {
+  try {
+    // Get all leads where:
+    // - fu_bit_sent is true
+    // - fu2_bit_sent is false
+    // - bit_text is not null
+    // - bit_date is today
+    const leads = await leadRepository.findAllByQuery(
+      "SELECT * FROM leads WHERE opted_out = FALSE AND fu_bit_sent = TRUE AND fu2_bit_sent = FALSE AND bit_text IS NOT NULL AND bit_date IS NOT NULL AND DATE(bit_date) = CURRENT_DATE",
+    );
+
+    // Filter leads where bit_date is today (in case the SQL query isn't supported by all DB providers)
+    const todayLeads = leads.filter(
+      (lead) => lead.bit_date && isToday(lead.bit_date),
+    );
+
+    const results = [];
+
+    // Process each lead
+    for (const lead of todayLeads) {
+      try {
+        if (!lead.lead_phone) {
+          continue;
+        }
+
+        // Get the BIT date in IST timezone
+        const bitDateIST = dayjs(lead.bit_date).tz(IST_TIMEZONE);
+
+        // Format slot as "today at HH:MM IST"
+        const slotFormatted = `today at ${bitDateIST.format("HH:mm")} IST`;
+
+        // Calculate link time (15 minutes before BIT time)
+        const linkTimeIST = bitDateIST.subtract(15, "minute");
+        const linkTimeFormatted = `${linkTimeIST.format("HH:mm")} IST`;
+
+        // Create template parameters
+        const params: ITemplateParameter[] = [
+          { parameter_name: "slot", type: "TEXT", text: slotFormatted },
+          {
+            parameter_name: "link_time",
+            type: "TEXT",
+            text: linkTimeFormatted,
+          },
+        ];
+
+        // Send the fu_bit_2 template
+        const result = await LeadsUtils.sendTemplateMessage(
+          lead.lead_phone,
+          "fu_bit_2",
+          params,
+          "en_US",
+        );
+
+        // Update lead record to mark fu2_bit_sent as true
+        await leadRepository.update(lead.id!, {
+          fu2_bit_sent: true,
+        });
+
+        results.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          status: "success",
+          bit_date: bitDateIST.format("DD.MM.YY, HH:mm"),
+          link_time: linkTimeFormatted,
+          slot: slotFormatted,
+        });
+      } catch (error) {
+        LogsUtils.logError(
+          `Failed to send fu_bit_2 to lead ID: ${lead.id}`,
+          error as Error,
+        );
+        results.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          status: "error",
+          error: (error as Error).message,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      processed_count: todayLeads.length,
+      results,
+    });
+  } catch (error) {
+    LogsUtils.logError("Failed to process fu_bit_2 follow-ups", error as Error);
+    res.status(500).json({
+      error: "Failed to process fu_bit_2 follow-ups",
       message: (error as Error).message,
     });
   }

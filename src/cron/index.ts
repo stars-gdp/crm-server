@@ -120,6 +120,28 @@ export function initializeCronJobs(): void {
     "UTC",
   );
 
+  // BIT follow-up (fu_bit_1) at 13:00 UTC on Saturdays
+  const fuBitJob = new CronJob(
+    "0 13 * * 6", // 13:00 UTC on Saturdays (6 = Saturday)
+    () => {
+      triggerFollowUp("send-fu-bit1");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // Second BIT follow-up (fu_bit_2) at 8:00 UTC on Sundays (day of BIT meeting)
+  const fuBit2Job = new CronJob(
+    "0 10 * * 0", // 10:00 UTC on Sundays (0 = Sunday)
+    () => {
+      triggerFollowUp("send-fu-bit2");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
   // Start all jobs
   fu1Job.start();
   fu2Job.start();
@@ -129,6 +151,8 @@ export function initializeCronJobs(): void {
   sundayNotReadyJob.start();
   sundayNoCodeJob.start();
   weekdayNoCodeJob.start();
+  fuBitJob.start();
+  fuBit2Job.start();
 
   LogsUtils.logMessage("All cron jobs started successfully");
 }
