@@ -92,6 +92,9 @@ export class Lead {
   @Column({ type: "boolean" })
   link_bom_sent?: boolean;
 
+  @Column({ type: "boolean" })
+  needs_attention?: boolean;
+
   @CreateDateColumn()
   created_at?: Date;
 }

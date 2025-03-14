@@ -403,4 +403,261 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * Send not_ready_bom template to all leads who have BOM scheduled for today
+ * but haven't pressed the attendance confirmation button
+ */
+router.post("/send-not-ready-bom", async (req: Request, res: Response) => {
+  try {
+    // Get all leads with BOM scheduled for today who haven't confirmed attendance
+    const leads = await leadRepository.findAllByQuery(`
+      SELECT
+        id,
+        lead_name,
+        lead_phone,
+        bom_text,
+        bom_date,
+        fu_bom_sent,
+        fu_bom_confirmed,
+        fu2_bom_sent,
+        fu2_bom_confirmed,
+        yes_bom_sent,
+        link_bom_sent
+      FROM
+        leads
+      WHERE
+        DATE(bom_date) = CURRENT_DATE
+        AND bom_text IS NOT NULL
+        AND yes_bom_pressed = false
+        AND opted_out = false
+        AND needs_attention = FALSE
+    `);
+
+    LogsUtils.logMessage(
+      `Found ${leads.length} leads for bulk not_ready_bom send`,
+    );
+
+    // Process results storage
+    const results = {
+      total: leads.length,
+      sent: 0,
+      failed: 0,
+      details: [] as Array<{
+        lead_id: number | undefined;
+        lead_phone: string | undefined;
+        lead_name: string | undefined;
+        status: "success" | "failed";
+        error?: string;
+      }>,
+    };
+
+    // Send messages to each lead
+    for (const lead of leads) {
+      try {
+        if (!lead.lead_phone) {
+          results.failed++;
+          results.details.push({
+            lead_id: lead.id,
+            lead_phone: lead.lead_phone,
+            lead_name: lead.lead_name,
+            status: "failed",
+            error: "Missing phone number",
+          });
+          continue;
+        }
+
+        // Send the not_ready_bom template
+        await LeadsUtils.sendTemplateMessage(
+          lead.lead_phone,
+          "not_ready_bom",
+          [],
+          "en_US",
+        );
+
+        await leadRepository.update(lead.id!, {
+          needs_attention: true,
+        });
+
+        LogsUtils.logMessage(
+          `Sent not_ready_bom template to ${lead.lead_name} (${lead.lead_phone})`,
+        );
+
+        results.sent++;
+        results.details.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          lead_name: lead.lead_name,
+          status: "success",
+        });
+
+        // Add a small delay to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } catch (error) {
+        LogsUtils.logError(
+          `Failed to send not_ready_bom template to lead ID: ${lead.id}`,
+          error as Error,
+        );
+
+        results.failed++;
+        results.details.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          lead_name: lead.lead_name,
+          status: "failed",
+          error: (error as Error).message,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Bulk not_ready_bom send completed: ${results.sent} sent, ${results.failed} failed`,
+      results,
+    });
+  } catch (error) {
+    LogsUtils.logError(
+      "Failed to process bulk not_ready_bom send",
+      error as Error,
+    );
+    res.status(500).json({
+      error: "Failed to process bulk not_ready_bom send",
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * Send no_code_bom template to all leads who have BOM scheduled for today,
+ * haven't pressed the attendance confirmation button, and don't have BIT scheduled
+ */
+router.post("/send-no-code-bom", async (req: Request, res: Response) => {
+  try {
+    // Get all leads matching the specified criteria
+    const leads = await leadRepository.findAllByQuery(`
+      SELECT
+        id,
+        lead_name,
+        lead_phone,
+        bom_text,
+        bom_date,
+        fu_bom_sent,
+        fu_bom_confirmed,
+        fu2_bom_sent,
+        fu2_bom_confirmed,
+        yes_bom_sent,
+        link_bom_sent
+      FROM
+        leads
+      WHERE
+        DATE(bom_date) = CURRENT_DATE
+        AND bom_text IS NOT NULL
+        AND yes_bom_pressed = TRUE
+        AND bit_text IS NULL
+        AND bit_date IS NULL
+        AND opted_out = FALSE
+        AND needs_attention = FALSE
+    `);
+
+    LogsUtils.logMessage(
+      `Found ${leads.length} leads for bulk no_code_bom send`,
+    );
+
+    // Process results storage
+    const results = {
+      total: leads.length,
+      sent: 0,
+      failed: 0,
+      details: [] as Array<{
+        lead_id: number | undefined;
+        lead_phone: string | undefined;
+        lead_name: string | undefined;
+        status: "success" | "failed";
+        error?: string;
+      }>,
+    };
+
+    // Send messages to each lead
+    for (const lead of leads) {
+      try {
+        if (!lead.lead_phone) {
+          results.failed++;
+          results.details.push({
+            lead_id: lead.id,
+            lead_phone: lead.lead_phone,
+            lead_name: lead.lead_name,
+            status: "failed",
+            error: "Missing phone number",
+          });
+          continue;
+        }
+
+        // Create template parameter for the name
+        const params: ITemplateParameter[] = [
+          {
+            parameter_name: "name",
+            type: "TEXT",
+            text: lead.lead_name || "Hello",
+          },
+        ];
+
+        // Send the no_code_bom template with the name parameter
+        await LeadsUtils.sendTemplateMessage(
+          lead.lead_phone,
+          "no_code_bom",
+          params,
+          "en_US",
+        );
+
+        await leadRepository.update(lead.id!, {
+          needs_attention: true,
+        });
+
+        LogsUtils.logMessage(
+          `Sent no_code_bom template to ${lead.lead_name} (${lead.lead_phone})`,
+        );
+
+        results.sent++;
+        results.details.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          lead_name: lead.lead_name,
+          status: "success",
+        });
+
+        // Add a small delay to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } catch (error) {
+        LogsUtils.logError(
+          `Failed to send no_code_bom template to lead ID: ${lead.id}`,
+          error as Error,
+        );
+
+        results.failed++;
+        results.details.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          lead_name: lead.lead_name,
+          status: "failed",
+          error: (error as Error).message,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Bulk no_code_bom send completed: ${results.sent} sent, ${results.failed} failed`,
+      results,
+    });
+  } catch (error) {
+    LogsUtils.logError(
+      "Failed to process bulk no_code_bom send",
+      error as Error,
+    );
+    res.status(500).json({
+      error: "Failed to process bulk no_code_bom send",
+      message: (error as Error).message,
+    });
+  }
+});
+
 export default router;

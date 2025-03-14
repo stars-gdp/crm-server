@@ -76,11 +76,59 @@ export function initializeCronJobs(): void {
     "UTC",
   );
 
+  // For Sunday meetings (09:30 UTC)
+  const sundayNotReadyJob = new CronJob(
+    "50 9 * * 0", // 09:30 UTC on Sundays (0 = Sunday)
+    () => {
+      triggerFollowUp("send-not-ready-bom");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // For Monday-Saturday meetings (10:30 UTC)
+  const weekdayNotReadyJob = new CronJob(
+    "50 10 * * 1-6", // 10:30 UTC Monday-Saturday (1-6)
+    () => {
+      triggerFollowUp("send-not-ready-bom");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // For Sunday meetings (09:30 UTC)
+  const sundayNoCodeJob = new CronJob(
+    "0 10 * * 0", // 09:30 UTC on Sundays (0 = Sunday)
+    () => {
+      triggerFollowUp("send-no-code-bom");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // For Monday-Saturday meetings (10:30 UTC)
+  const weekdayNoCodeJob = new CronJob(
+    "0 11 * * 1-6", // 10:30 UTC Monday-Saturday (1-6)
+    () => {
+      triggerFollowUp("send-no-code-bom");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
   // Start all jobs
   fu1Job.start();
   fu2Job.start();
   weekdayReminderJob.start();
   sundayReminderJob.start();
+  weekdayNotReadyJob.start();
+  sundayNotReadyJob.start();
+  sundayNoCodeJob.start();
+  weekdayNoCodeJob.start();
 
   LogsUtils.logMessage("All cron jobs started successfully");
 }
