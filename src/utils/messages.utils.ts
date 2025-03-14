@@ -24,6 +24,7 @@ class MessagesUtils {
     const message = wa_message.messages[0];
     const phone = message.from;
     const contextId = !!message.context ? message.context.id : "";
+    const existingLead = await leadRepository.findByPhone(phone);
 
     switch (message.type) {
       case MessageType.TEXT:
@@ -35,9 +36,6 @@ class MessagesUtils {
             .includes("global dropshipping project")
         ) {
           try {
-            // Check if lead already exists
-            const existingLead = await leadRepository.findByPhone(phone);
-
             if (!existingLead) {
               // Extract contact name from the message metadata
               const contactName =
@@ -210,6 +208,16 @@ class MessagesUtils {
             contextId,
             MessageType.TEXT,
           );
+
+          // Mark lead as needing attention since they sent a text instead of using buttons
+          if (existingLead && existingLead.id) {
+            await leadRepository.update(existingLead.id, {
+              needs_attention: true,
+            });
+            LogsUtils.logMessage(
+              `Marked lead ${existingLead.id} as needing attention - text message`,
+            );
+          }
         }
         break;
       case MessageType.REACTION:
@@ -223,6 +231,16 @@ class MessagesUtils {
           message.reaction.message_id,
           MessageType.REACTION,
         );
+
+        // Mark lead as needing attention since they sent a text instead of using buttons
+        if (existingLead && existingLead.id) {
+          await leadRepository.update(existingLead.id, {
+            needs_attention: true,
+          });
+          LogsUtils.logMessage(
+            `Marked lead ${existingLead.id} as needing attention - text message`,
+          );
+        }
         break;
       case MessageType.BUTTON:
         await this.saveMessageToDb(
@@ -256,6 +274,16 @@ class MessagesUtils {
           MessageType.IMAGE,
           message.image.id,
         );
+
+        // Mark lead as needing attention since they sent a text instead of using buttons
+        if (existingLead && existingLead.id) {
+          await leadRepository.update(existingLead.id, {
+            needs_attention: true,
+          });
+          LogsUtils.logMessage(
+            `Marked lead ${existingLead.id} as needing attention - text message`,
+          );
+        }
         break;
       case MessageType.VIDEO:
         await this.saveMessageToDb(
@@ -269,6 +297,16 @@ class MessagesUtils {
           MessageType.VIDEO,
           message.video.id,
         );
+
+        // Mark lead as needing attention since they sent a text instead of using buttons
+        if (existingLead && existingLead.id) {
+          await leadRepository.update(existingLead.id, {
+            needs_attention: true,
+          });
+          LogsUtils.logMessage(
+            `Marked lead ${existingLead.id} as needing attention - text message`,
+          );
+        }
         break;
       default:
         LogsUtils.logMessage(`Unknown message type: ${message.type}`);
