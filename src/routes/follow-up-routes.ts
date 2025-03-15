@@ -371,6 +371,7 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
         // Update lead record to mark link_bom_sent as true
         await leadRepository.update(lead.id!, {
           link_bom_sent: true,
+          needs_attention: false,
           bom_text: BomStatus.Show,
         });
 
