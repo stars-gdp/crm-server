@@ -213,4 +213,31 @@ router.post(
   },
 );
 
+// Switch needs attention
+router.post(
+  "/phone/:phone/switch-needs-attention",
+  async (req: Request, res: Response) => {
+    try {
+      const phone = req.params.phone;
+      const lead = await leadRepository.findByPhone(phone);
+      if (!lead) {
+        res.status(404).json({ error: "Lead not found" });
+      }
+
+      const result = await LeadsUtils.switchNeedsAttention(
+        lead?.id!,
+        !lead?.needs_attention!,
+      );
+
+      res.json({ success: true, result });
+    } catch (error) {
+      LogsUtils.logError(
+        `Failed to switch needs attention: ${req.params.phone}`,
+        error as Error,
+      );
+      res.status(500).json({ error: "Failed to switch needs attention" });
+    }
+  },
+);
+
 export default router;

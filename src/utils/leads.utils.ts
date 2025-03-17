@@ -3,8 +3,11 @@ import NewLeadsRepository from "../repositories/new-leads.repository";
 import LogsUtils from "./logs.utils";
 import { ITemplateParameter, MessageDirection } from "../typescript/interfaces";
 import MessagesUtils from "./messages.utils";
+import { LeadRepository } from "../repositories/lead.repository";
 
 class LeadsUtils {
+  private readonly leadRepository = new LeadRepository();
+
   async initiateConversation() {
     try {
       const newLeads = await NewLeadsRepository.findAll();
@@ -94,6 +97,22 @@ class LeadsUtils {
     } catch (error) {
       LogsUtils.logError(
         `Failed to send free-form message to ${phoneNumber}`,
+        error as Error,
+      );
+      throw error;
+    }
+  }
+
+  async switchNeedsAttention(id: number, value: boolean): Promise<any> {
+    try {
+      const result = await this.leadRepository.update(id, {
+        needs_attention: value,
+      });
+      LogsUtils.logMessage(`Switched attention for lead id: ${id}"`);
+      return result;
+    } catch (error) {
+      LogsUtils.logError(
+        `Failed to switched attention for lead id: ${id}`,
         error as Error,
       );
       throw error;
