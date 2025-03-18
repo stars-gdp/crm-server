@@ -548,6 +548,7 @@ class MessagesUtils {
         // Update lead record to mark fu2_bom_confirmed as true
         await leadRepository.update(lead.id!, {
           fu2_bom_confirmed: true,
+          yes_bom_pressed: true,
         });
       }
       // Handle the 15_mins_before_bom template confirmation

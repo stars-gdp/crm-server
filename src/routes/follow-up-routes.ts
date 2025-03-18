@@ -160,7 +160,7 @@ router.post("/send-fu2", async (req: Request, res: Response) => {
     // - fu_bom_confirmed is true
     // - bom_date is today
     const leads = await leadRepository.findAllByQuery(
-      "SELECT * FROM leads WHERE opted_out = FALSE AND fu2_bom_sent = FALSE AND fu_bom_confirmed = TRUE AND bom_date IS NOT NULL",
+      "SELECT * FROM leads WHERE opted_out = FALSE AND fu2_bom_sent = FALSE AND bom_date IS NOT NULL",
     );
 
     // Filter leads where bom_date is today
@@ -243,7 +243,7 @@ router.post("/send-15min-reminder", async (req: Request, res: Response) => {
     // - bom_date is today
     // - The time is approaching their BOM time (within 15-20 minutes)
     const leads = await leadRepository.findAllByQuery(
-      "SELECT * FROM leads WHERE opted_out = FALSE AND fu2_bom_confirmed = TRUE AND yes_bom_sent = FALSE AND bom_date IS NOT NULL",
+      "SELECT * FROM leads WHERE opted_out = FALSE AND fu2_bom_confirmed = FALSE AND yes_bom_sent = FALSE AND bom_date IS NOT NULL",
     );
 
     const now = new Date();
