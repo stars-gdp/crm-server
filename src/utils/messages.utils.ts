@@ -576,6 +576,14 @@ class MessagesUtils {
         await leadRepository.update(lead.id!, {
           bom_text: BomStatus.Show,
         });
+      } else if (
+        originalMessage.template_name === "not_ready_bom" &&
+        buttonPayload === "I want to talk"
+      ) {
+        LogsUtils.logMessage(
+          `User ${phone} wants to talk about BOM with I want to talk" button`,
+        );
+        await leadRepository.update(lead.id!, { needs_attention: true });
       } else if (buttonPayload === "Stop promotions") {
         LogsUtils.logMessage(
           `User ${phone} opted out of promotions with "Stop promotions" button`,

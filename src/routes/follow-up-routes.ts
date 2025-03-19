@@ -571,10 +571,6 @@ router.post("/send-not-ready-bom", async (req: Request, res: Response) => {
           "en_US",
         );
 
-        await leadRepository.update(lead.id!, {
-          needs_attention: true,
-        });
-
         LogsUtils.logMessage(
           `Sent not_ready_bom template to ${lead.lead_name} (${lead.lead_phone})`,
         );
@@ -704,10 +700,6 @@ router.post("/send-no-code-bom", async (req: Request, res: Response) => {
           params,
           "en_US",
         );
-
-        await leadRepository.update(lead.id!, {
-          needs_attention: true,
-        });
 
         LogsUtils.logMessage(
           `Sent no_code_bom template to ${lead.lead_name} (${lead.lead_phone})`,
