@@ -91,3 +91,9 @@ export enum MessageType {
   REACTION = "reaction",
   TEXT = "text",
 }
+
+export enum LinkType {
+  BOM = "BOM",
+  BIT = "BIT",
+  WG = "WG",
+}

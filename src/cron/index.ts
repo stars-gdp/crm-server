@@ -87,11 +87,99 @@ export function initializeCronJobs(): void {
     "UTC",
   );
 
-  // For Monday-Saturday meetings (10:30 UTC)
+  // For Monday-Saturday meetings (10:50 UTC)
   const weekdayNotReadyJob = new CronJob(
     "50 10 * * 1-6", // 10:30 UTC Monday-Saturday (1-6)
     () => {
       triggerFollowUp("send-not-ready-bom");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // 10:45 UTC Monday-Saturday
+  const weekdayLink1 = new CronJob(
+    "45 10 * * 1-6",
+    () => {
+      triggerFollowUp("send-zoom-link");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // 10:55 UTC Monday-Saturday
+  const weekdayLink2 = new CronJob(
+    "55 10 * * 1-6",
+    () => {
+      triggerFollowUp("send-zoom-link");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // 11:00 UTC Monday-Saturday
+  const weekdayLink3 = new CronJob(
+    "0 11 * * 1-6",
+    () => {
+      triggerFollowUp("send-zoom-link");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // 09:45 UTC Sunday
+  const sundayLink1 = new CronJob(
+    "45 9 * * 0",
+    () => {
+      triggerFollowUp("send-zoom-link");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // 10:55 UTC Sunday
+  const sundayLink2 = new CronJob(
+    "55 9 * * 0",
+    () => {
+      triggerFollowUp("send-zoom-link");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // 10:00 UTC Sunday
+  const sundayLink3 = new CronJob(
+    "0 10 * * 0",
+    () => {
+      triggerFollowUp("send-zoom-link");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // 11:45 UTC Sunday
+  const bitLink = new CronJob(
+    "45 11 * * 0",
+    () => {
+      triggerFollowUp("send-bit-zoom-link");
+    },
+    null,
+    true,
+    "UTC",
+  );
+
+  // 11:45 UTC Sunday
+  const wgLink = new CronJob(
+    "45 11 * * 1-6",
+    () => {
+      triggerFollowUp("send-wg-zoom-link");
     },
     null,
     true,
@@ -153,6 +241,14 @@ export function initializeCronJobs(): void {
   weekdayNoCodeJob.start();
   fuBitJob.start();
   fuBit2Job.start();
+  weekdayLink1.start();
+  weekdayLink2.start();
+  weekdayLink3.start();
+  sundayLink1.start();
+  sundayLink2.start();
+  sundayLink3.start();
+  bitLink.start();
+  wgLink.start();
 
   LogsUtils.logMessage("All cron jobs started successfully");
 }

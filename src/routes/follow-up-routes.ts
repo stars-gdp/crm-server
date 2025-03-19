@@ -10,6 +10,7 @@ import {
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { LinkRepository } from "../repositories/link.repository";
 
 // Extend dayjs with required plugins
 dayjs.extend(utc);
@@ -17,6 +18,7 @@ dayjs.extend(timezone);
 
 const router = Router();
 const leadRepository = new LeadRepository();
+const linkRepository = new LinkRepository();
 
 // Constants
 const IST_TIMEZONE = "Asia/Kolkata";
@@ -326,20 +328,19 @@ router.post("/send-15min-reminder", async (req: Request, res: Response) => {
  */
 router.post("/send-zoom-link", async (req: Request, res: Response) => {
   try {
-    // Validate request body
-    if (!req.body.zoom_link) {
-      res.status(400).json({ error: "Zoom link is required" });
-      return;
-    }
-
-    const zoomLink = req.body.zoom_link;
-
     // Get all leads where:
     // - yes_bom_pressed is true
     // - bom_date is today
     const leads = await leadRepository.findAllByQuery(
       "SELECT * FROM leads WHERE opted_out = FALSE AND yes_bom_pressed = TRUE and link_bom_sent = FALSE and bom_text = 'BOM' AND bom_date IS NOT NULL",
     );
+
+    const zoomLink = (await linkRepository.findTodayBOM())?.link;
+
+    if (!zoomLink) {
+      res.status(400).json({ error: "Zoom link is required" });
+      return;
+    }
 
     // Filter leads where bom_date is today
     const todayLeads = leads.filter(
@@ -415,13 +416,12 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
  */
 router.post("/send-bit-zoom-link", async (req: Request, res: Response) => {
   try {
-    // Validate request body
-    if (!req.body.zoom_link) {
+    const zoomLink = (await linkRepository.findTodayBIT())?.link;
+
+    if (!zoomLink) {
       res.status(400).json({ error: "Zoom link is required" });
       return;
     }
-
-    const zoomLink = req.body.zoom_link;
 
     // Get all leads where:
     // - bit_text is BIT (confirmed)
@@ -495,6 +495,84 @@ router.post("/send-bit-zoom-link", async (req: Request, res: Response) => {
     );
     res.status(500).json({
       error: "Failed to process BIT Zoom link sending",
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * Send wg template with Zoom link to leads with WG meetings scheduled for today
+ * and update their bit_text status to "Show"
+ */
+router.post("/send-wg-zoom-link", async (req: Request, res: Response) => {
+  try {
+    const zoomLink = (await linkRepository.findTodayWG())?.link;
+
+    if (!zoomLink) {
+      res.status(400).json({ error: "Zoom link is required" });
+      return;
+    }
+
+    // Get all leads where:
+    // - wg_text is WG1 (confirmed)
+    const leads = await leadRepository.findAllByQuery(
+      "SELECT * FROM leads WHERE opted_out = FALSE AND wg_text = 'WG1'",
+    );
+
+    const results = [];
+
+    // Process each lead
+    for (const lead of leads) {
+      try {
+        if (!lead.lead_phone) {
+          continue;
+        }
+
+        // Create template parameters with the Zoom link
+        const params: ITemplateParameter[] = [
+          { parameter_name: "link", type: "TEXT", text: zoomLink },
+        ];
+
+        // Send the book_bit template with Zoom link (assuming this template exists)
+        const result = await LeadsUtils.sendTemplateMessage(
+          lead.lead_phone,
+          "wg",
+          params,
+          "en_US",
+        );
+
+        results.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          status: "success",
+          wg_date: formatDateInIST(new Date()),
+        });
+      } catch (error) {
+        LogsUtils.logError(
+          `Failed to send WG Zoom link to lead ID: ${lead.id}`,
+          error as Error,
+        );
+        results.push({
+          lead_id: lead.id,
+          lead_phone: lead.lead_phone,
+          status: "error",
+          error: (error as Error).message,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      processed_count: leads.length,
+      results,
+    });
+  } catch (error) {
+    LogsUtils.logError(
+      "Failed to process WG Zoom link sending",
+      error as Error,
+    );
+    res.status(500).json({
+      error: "Failed to process WG Zoom link sending",
       message: (error as Error).message,
     });
   }

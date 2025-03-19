@@ -1,10 +1,11 @@
 import MessagesRepository from "../repositories/messages.repository";
 import {
+  BitStatus,
+  BomStatus,
   ITemplateParameter,
   MessageDirection,
   MessageType,
-  BomStatus,
-  BitStatus,
+  WgStatus,
 } from "../typescript/interfaces";
 import TemplateRepository from "../repositories/template.repository";
 import LogsUtils from "./logs.utils";
@@ -194,6 +195,104 @@ class MessagesUtils {
           } catch (error) {
             LogsUtils.logError(
               `Error processing bit2025 code from ${phone}`,
+              error as Error,
+            );
+          }
+        } else if (
+          message.text.body.replace(/\s+/g, "").toLowerCase().includes("mike")
+        ) {
+          try {
+            // Get the lead record
+            const lead = await leadRepository.findByPhone(phone);
+            if (!lead) {
+              LogsUtils.logError(
+                `No lead found for ${phone} when processing mike code`,
+                new Error("Lead not found"),
+              );
+              return;
+            }
+
+            // Get the next WG date
+            const wgDateString = BookUtils.getNextWg1Date();
+            LogsUtils.logMessage(
+              `User ${phone} sent mike code, sending after_code_bom with date: ${wgDateString}`,
+            );
+
+            // Create template parameter for the WG date
+            const params: ITemplateParameter[] = [
+              { parameter_name: "slot", type: "TEXT", text: wgDateString },
+            ];
+
+            await this.saveMessageToDb(
+              wa_message,
+              phone,
+              MessageDirection.INCOMING,
+              "",
+              message.text.body,
+              undefined,
+              contextId,
+              MessageType.TEXT,
+            );
+
+            // Send after_code_bom template with the date parameter
+            await LeadsUtils.sendTemplateMessage(
+              phone,
+              "after_code_bit",
+              params,
+              "en_US",
+            );
+
+            // Parse the date from wgDateString
+            // Format example: "Sunday, 16.03.25, 17:30 IST"
+            const dateMatch = wgDateString.match(/(\d{2}\.\d{2}\.\d{2})/);
+            const timeMatch = wgDateString.match(/(\d{2}:\d{2})/);
+
+            if (!dateMatch || !timeMatch) {
+              LogsUtils.logError(
+                `Could not parse date from ${wgDateString}`,
+                new Error("Invalid date format"),
+              );
+              return;
+            }
+
+            const dateString = dateMatch[1]; // "16.03.25"
+            const timeString = timeMatch[1]; // "17:30"
+
+            // Parse the date - format is DD.MM.YY
+            const parts = dateString.split(".");
+            // Note: JavaScript months are 0-indexed, so we subtract 1 from the month
+            const year = 2000 + parseInt(parts[2]); // Assuming 20xx years
+            const month = parseInt(parts[1]) - 1;
+            const day = parseInt(parts[0]);
+
+            // Create a date object for the WG time in IST
+            const wgDateIST = new Date(year, month, day);
+
+            // Set the time part - format is HH:MM
+            const timeParts = timeString.split(":");
+            wgDateIST.setHours(
+              parseInt(timeParts[0]),
+              parseInt(timeParts[1]),
+              0,
+            );
+
+            // Convert from IST to UTC (IST is UTC+5:30)
+            // We need to subtract 5 hours and 30 minutes to get UTC time
+            const wgDateUTC = new Date(wgDateIST.getTime());
+            wgDateUTC.setHours(wgDateIST.getHours() - 5);
+            wgDateUTC.setMinutes(wgDateIST.getMinutes() - 30);
+
+            // Update the lead record
+            await leadRepository.update(lead.id!, {
+              wg_text: WgStatus.WG1,
+            });
+
+            LogsUtils.logMessage(
+              `Updated lead record for ${phone}: WG=${WgStatus.WG1}, date=${wgDateUTC.toISOString()}`,
+            );
+          } catch (error) {
+            LogsUtils.logError(
+              `Error processing mike code from ${phone}`,
               error as Error,
             );
           }
