@@ -6,6 +6,7 @@ import {
   BitStatus,
   BomStatus,
   ITemplateParameter,
+  WgStatus,
 } from "../typescript/interfaces";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -516,7 +517,7 @@ router.post("/send-wg-zoom-link", async (req: Request, res: Response) => {
     // Get all leads where:
     // - wg_text is WG1 (confirmed)
     const leads = await leadRepository.findAllByQuery(
-      "SELECT * FROM leads WHERE opted_out = FALSE AND wg_text = 'WG1'",
+      "SELECT * FROM leads WHERE opted_out = FALSE AND wg_text is not null and wg_text != 'Not Interested'",
     );
 
     const results = [];
@@ -540,6 +541,10 @@ router.post("/send-wg-zoom-link", async (req: Request, res: Response) => {
           params,
           "en_US",
         );
+
+        await leadRepository.update(lead.id!, {
+          wg_text: WgStatus.WG,
+        });
 
         results.push({
           lead_id: lead.id,

@@ -73,6 +73,8 @@ export enum PtStatus {
   Show = "Show",
 }
 export enum WgStatus {
+  Code = "code",
+  WG = "WG",
   WG1 = "WG1",
   WG2 = "WG2",
   WG3 = "WG3",

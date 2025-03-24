@@ -284,7 +284,8 @@ class MessagesUtils {
 
             // Update the lead record
             await leadRepository.update(lead.id!, {
-              wg_text: WgStatus.WG1,
+              wg_text: WgStatus.Code,
+              wg_date: wgDateUTC,
             });
 
             LogsUtils.logMessage(
