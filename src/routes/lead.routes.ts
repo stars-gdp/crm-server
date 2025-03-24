@@ -240,4 +240,34 @@ router.post(
   },
 );
 
+// Send next_step_ready
+router.post(
+  "/phone/:phone/send-next-step-ready",
+  async (req: Request, res: Response) => {
+    try {
+      const phone = req.params.phone;
+      const { language } = req.body;
+      const lead = await leadRepository.findByPhone(phone);
+      if (!lead) {
+        res.status(404).json({ error: "Lead not found" });
+      }
+
+      const result = await LeadsUtils.sendTemplateMessage(
+        phone,
+        "next_step_ready",
+        [],
+        language || "en_US",
+      );
+
+      res.json({ success: true, result });
+    } catch (error) {
+      LogsUtils.logError(
+        `Failed to send next_step_ready: ${req.params.phone}`,
+        error as Error,
+      );
+      res.status(500).json({ error: "Failed to sent next_step_ready" });
+    }
+  },
+);
+
 export default router;
