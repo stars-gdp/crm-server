@@ -543,7 +543,7 @@ router.post("/send-wg-zoom-link", async (req: Request, res: Response) => {
         );
 
         await leadRepository.update(lead.id!, {
-          wg_text: WgStatus.WG,
+          wg_text: WgStatus.WG1,
         });
 
         results.push({

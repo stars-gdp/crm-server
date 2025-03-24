@@ -74,10 +74,9 @@ export enum PtStatus {
 }
 export enum WgStatus {
   Code = "code",
-  WG = "WG",
-  WG1 = "WG1",
-  WG2 = "WG2",
-  WG3 = "WG3",
+  WG1 = "WG 1",
+  WG2 = "WG 2",
+  WG3 = "WG 3",
   NotInterested = "Not Interested",
 }
 
