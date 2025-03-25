@@ -4,6 +4,8 @@ import LogsUtils from "./logs.utils";
 import { ITemplateParameter, MessageDirection } from "../typescript/interfaces";
 import MessagesUtils from "./messages.utils";
 import { LeadRepository } from "../repositories/lead.repository";
+import TemplateRepository from "../repositories/template.repository";
+import FBTemplateRepository from "../repositories/fb-template.repository";
 
 class LeadsUtils {
   private readonly leadRepository = new LeadRepository();
@@ -44,10 +46,15 @@ class LeadsUtils {
     language: string = "en_US",
   ): Promise<any> {
     try {
+      const t = await TemplateRepository.findByName(templateName);
+      const fbName = !!t?.wa_id
+        ? (await FBTemplateRepository.findByWaId(t?.wa_id!))?.name!
+        : templateName;
+
       // Send template message via WhatsApp API
       const result = await WhatsappUtils.sendTemplateWithParams(
         phoneNumber,
-        templateName,
+        fbName,
         parameters,
         language,
       );
@@ -59,6 +66,10 @@ class LeadsUtils {
         templateName,
         "",
         parameters,
+        undefined,
+        undefined,
+        undefined,
+        fbName,
       );
 
       LogsUtils.logMessage(

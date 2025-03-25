@@ -1,6 +1,7 @@
 import EnvConfig from "../config/env.config";
 import LogsUtils from "./logs.utils";
 import {
+  IFBTemplate,
   ITemplateMessage,
   ITemplateParameter,
   IWhatsAppMessage,
@@ -11,11 +12,27 @@ class WhatsappUtils {
   private apiUrl: string;
   private authToken: string;
   private phoneNumberId: string;
+  private wabaId: string;
 
   constructor() {
     this.apiUrl = EnvConfig.WHATSAPP_API_URL;
     this.authToken = EnvConfig.GRAPH_API_TOKEN;
     this.phoneNumberId = EnvConfig.PHONE_NUMBER_ID;
+    this.wabaId = EnvConfig.WABA_ID;
+  }
+
+  private async makeWabaApiRequest(endpoint: string, data: any): Promise<any> {
+    const url = `${this.apiUrl}/${this.wabaId}${endpoint}`;
+
+    return axios({
+      method: "GET",
+      url: url,
+      data: data,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.authToken}`,
+      },
+    });
   }
 
   /**
@@ -152,6 +169,15 @@ class WhatsappUtils {
     }
 
     return this.sendTemplateMessage(to, templateName, language, components);
+  }
+
+  /**
+   * Get all the templates
+   * @returns Promise with the API response
+   */
+  async getTemplates(): Promise<IFBTemplate> {
+    const response = await this.makeWabaApiRequest("/message_templates", {});
+    return response.data;
   }
 }
 

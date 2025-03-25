@@ -10,6 +10,9 @@ import { initializeDatabase } from "./config/database.config";
 import apiRoutes from "./routes";
 import MessagesUtils from "./utils/messages.utils";
 import SocketUtils from "./utils/socket.utils";
+import WhatsappUtils from "./utils/whatsapp.utils";
+import { FBTemplate } from "./entities/fb-template.entity";
+import FBTemplateRepository from "./repositories/fb-template.repository";
 
 // Initialize Express app
 const app = express();
@@ -133,6 +136,31 @@ const startServer = async () => {
     // Initialize database connection
     await initializeDatabase();
     LogsUtils.logMessage("Database connection established successfully");
+
+    // Load templates
+    WhatsappUtils.getTemplates().then((templates) => {
+      const fbTemplates: FBTemplate[] = [];
+      templates.data.forEach((template) => {
+        const fbTemplate: FBTemplate = {
+          name: template.name,
+          text: template.components.filter(
+            (component) => component.type === "BODY",
+          )[0].text,
+          status: template.status,
+          parameters: "",
+          wa_id: template.id,
+          language: template.language,
+        };
+
+        fbTemplates.push(fbTemplate);
+      });
+
+      FBTemplateRepository.bulkUpsert(fbTemplates);
+
+      LogsUtils.logMessage(
+        `Loaded ${fbTemplates.length} templates from WhatsApp API`,
+      );
+    });
 
     // Start server
     server.listen(EnvConfig.PORT, () => {

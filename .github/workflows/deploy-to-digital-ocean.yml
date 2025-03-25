@@ -57,6 +57,7 @@ jobs:
           # Add each environment variable
           echo "PORT=${{ secrets.PORT }}" >> production.env
           echo "WEBHOOK_VERIFY_TOKEN=${{ secrets.WEBHOOK_VERIFY_TOKEN }}" >> production.env
+          echo "WABA_ID=${{ secrets.WABA_ID }}" >> production.env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> production.env
           echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> production.env
           echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> production.env

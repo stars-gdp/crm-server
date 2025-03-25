@@ -57,6 +57,43 @@ export interface ITemplateParameter {
   text?: string;
 }
 
+export interface IFBTemplate {
+  data: IFBTemplateData[];
+  paging: {
+    cursors: {
+      before: string;
+      after: string;
+    };
+  };
+}
+
+export interface IFBTemplateData {
+  name: string;
+  components: IFBTemplateComponent[];
+  language: string;
+  status: FBTemplateStatus;
+  category: string;
+  sub_category: string;
+  id: string;
+}
+
+export interface IFBTemplateComponent {
+  type: string;
+  text?: string;
+  buttons?: IFBTemplateButton[];
+}
+
+export interface IFBTemplateButton {
+  type: string;
+  text: string;
+}
+
+export enum FBTemplateStatus {
+  APPROVED = "APPROVED",
+  PENDING = "PENDING",
+  REJECTED = "REJECTED",
+}
+
 export enum BomStatus {
   BOM = "BOM",
   NotInterested = "Not Interested",

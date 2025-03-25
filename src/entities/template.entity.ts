@@ -16,4 +16,12 @@ export class Template {
 
   @Column({ type: "varchar", nullable: true, length: 80 })
   continue_button?: string;
+
+  @Column({
+    type: "varchar",
+    length: 200,
+    nullable: false,
+    unique: true,
+  })
+  wa_id?: string;
 }

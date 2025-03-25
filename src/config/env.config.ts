@@ -6,6 +6,7 @@ import path from "path";
 class EnvConfig implements IConfig {
   PORT: number;
   WEBHOOK_VERIFY_TOKEN: string;
+  WABA_ID: string;
   GRAPH_API_TOKEN: string;
   PHONE_NUMBER_ID: string;
   WHATSAPP_API_URL: string;
@@ -34,6 +35,7 @@ class EnvConfig implements IConfig {
 
     this.PORT = parseInt(process.env.PORT || "3000", 10);
     this.WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || "";
+    this.WABA_ID = process.env.WABA_ID || "";
     this.GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN || "";
     this.PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID || "";
     this.WHATSAPP_API_URL = process.env.WHATSAPP_API_URL || "";

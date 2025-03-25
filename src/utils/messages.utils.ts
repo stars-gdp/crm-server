@@ -13,6 +13,7 @@ import SocketUtils from "./socket.utils";
 import LeadsUtils from "./leads.utils";
 import { LeadRepository } from "../repositories/lead.repository";
 import BookUtils from "./book.utils";
+import FbTemplateRepository from "../repositories/fb-template.repository";
 
 // Create an instance of LeadRepository
 const leadRepository = new LeadRepository();
@@ -554,9 +555,6 @@ class MessagesUtils {
           `User ${phone} confirmed BOM attendance for ${selectedSlot}, sending lb_6`,
         );
 
-        // Send lb_6 template
-        await LeadsUtils.sendTemplateMessage(phone, "lb_6", [], "en_US");
-
         // Update lead record in database
         if (!lead) {
           LogsUtils.logError(
@@ -610,6 +608,22 @@ class MessagesUtils {
         const bomDate = new Date(bomDateIST.getTime());
         bomDate.setHours(bomDateIST.getHours() - 5);
         bomDate.setMinutes(bomDateIST.getMinutes() - 30);
+
+        const params: ITemplateParameter[] = [
+          {
+            parameter_name: "date",
+            type: "TEXT",
+            text: bomDateIST.toISOString().split("T")[0],
+          },
+          {
+            parameter_name: "time",
+            type: "TEXT",
+            text: bomDateIST.toTimeString().split(" ")[0],
+          },
+        ];
+
+        // Send lb_6 template
+        await LeadsUtils.sendTemplateMessage(phone, "lb_6", params, "en_US");
 
         // Update the lead record
         await leadRepository.update(lead.id!, {
@@ -718,6 +732,7 @@ class MessagesUtils {
     contextId?: string,
     type?: MessageType,
     mediaId?: string,
+    fbName?: string,
   ) {
     if (
       !!wa_message.messages[0]?.id && !!templateName
@@ -725,9 +740,11 @@ class MessagesUtils {
         : true
     ) {
       const timestamp = new Date();
-      let templateText = !!templateName
-        ? (await TemplateRepository.findByName(templateName))?.template_text
-        : "";
+      let templateText = !!fbName
+        ? (await FbTemplateRepository.findByName(fbName))?.text
+        : !!templateName
+          ? (await TemplateRepository.findByName(templateName))?.template_text
+          : "";
       if (!!templateText && !!templateParams && templateParams.length > 0) {
         templateParams?.forEach((param) => {
           templateText = templateText?.replace(
