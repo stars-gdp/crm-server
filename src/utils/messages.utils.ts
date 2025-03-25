@@ -27,6 +27,12 @@ class MessagesUtils {
     const contextId = !!message.context ? message.context.id : "";
     const existingLead = await leadRepository.findByPhone(phone);
 
+    if (!!existingLead && existingLead.opted_out) {
+      leadRepository.update(existingLead?.id!, {
+        opted_out: false,
+      });
+    }
+
     switch (message.type) {
       case MessageType.TEXT:
         // Check if this is an interest message
