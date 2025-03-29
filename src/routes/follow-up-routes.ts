@@ -871,8 +871,9 @@ router.post("/send-fu-bit1", async (req: Request, res: Response) => {
         // Send the fu_bit_1 template
         const result = await LeadsUtils.sendTemplateMessage(
           lead.lead_phone,
-          "fu_bit_1",
-          params,
+          "bit_mingling",
+          [],
+          //params,
           "en_US",
         );
 
