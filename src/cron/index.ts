@@ -166,7 +166,7 @@ export function initializeCronJobs(): void {
 
   // 11:45 UTC Sunday
   const bitLink = new CronJob(
-    "45 11 * * 0",
+    "40 11 * * 0",
     () => {
       triggerFollowUp("send-bit-zoom-link");
     },
