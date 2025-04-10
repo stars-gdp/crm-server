@@ -41,7 +41,7 @@ class TelegramUtils {
       const messageId = msg.message_id;
       const messageText = msg.text || msg.caption;
       const username = msg.from?.username;
-      const leadName = msg.from?.first_name + " " + msg.from?.last_name;
+      const leadName = msg.from?.first_name || "";
       const fileId =
         msg.document?.file_id ||
         msg.video?.file_id ||
