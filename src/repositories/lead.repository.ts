@@ -24,6 +24,18 @@ export class LeadRepository {
     });
   }
 
+  async findByTgUserName(tgUserName: string): Promise<Lead | null> {
+    return this.repository.findOne({
+      where: { tg_username: tgUserName },
+    });
+  }
+
+  async findByTgChatId(tgChatId: number): Promise<Lead | null> {
+    return this.repository.findOne({
+      where: { tg_chat_id: tgChatId },
+    });
+  }
+
   async create(leadData: Partial<Lead>): Promise<Lead> {
     const lead = this.repository.create(leadData);
     return this.repository.save(lead);
@@ -32,6 +44,18 @@ export class LeadRepository {
   async update(id: number, leadData: Partial<Lead>): Promise<Lead | null> {
     await this.repository.update(id, leadData);
     return this.findById(id);
+  }
+
+  async updateByTgChatId(
+    tg_chat_id: number,
+    leadData: Partial<Lead>,
+  ): Promise<Lead | null> {
+    const lead = await this.findByTgChatId(tg_chat_id);
+    if (!lead) {
+      return null;
+    }
+    await this.repository.update(lead.id!, leadData);
+    return lead;
   }
 
   async delete(id: number): Promise<boolean> {

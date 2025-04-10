@@ -15,6 +15,7 @@ class EnvConfig implements IConfig {
   DATABASE_USER: string;
   DATABASE_PASSWORD: string;
   DATABASE_NAME: string;
+  TELEGRAM_BOT_TOKEN: string;
 
   private loadDotEnv(): void {
     const envFile = process.env.NODE_ENV
@@ -46,6 +47,9 @@ class EnvConfig implements IConfig {
     this.DATABASE_USER = process.env.DATABASE_USER || "crm";
     this.DATABASE_PASSWORD = process.env.DATABASE_PASSWORD || "";
     this.DATABASE_NAME = process.env.DATABASE_NAME || "gdp";
+
+    // Telegram configuration
+    this.TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 
     if (process.env.NODE_ENV === "production") {
       if (!this.WEBHOOK_VERIFY_TOKEN) {

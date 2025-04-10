@@ -32,8 +32,14 @@ export class Message {
   })
   timestamp?: Date;
 
-  @Column({ name: "wa_id", nullable: false, length: 255 })
+  @Column({ name: "wa_id" })
   wa_id?: string;
+
+  @Column({ name: "tg_id", type: "int" })
+  tg_id?: number;
+
+  @Column({ type: "bigint", nullable: true })
+  tg_chat_id?: number;
 
   @Column({ name: "wa_response_id", length: 255 })
   wa_response_id?: string;

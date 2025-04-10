@@ -7,6 +7,7 @@ import {
 import {
   BitStatus,
   BomStatus,
+  ChannelType,
   PtStatus,
   WgStatus,
 } from "../typescript/interfaces";
@@ -94,6 +95,20 @@ export class Lead {
 
   @Column({ type: "boolean" })
   needs_attention?: boolean;
+
+  @Column({
+    type: "enum",
+    enum: ChannelType,
+    default: ChannelType.WHATSAPP,
+    nullable: false,
+  })
+  channel?: ChannelType;
+
+  @Column({ type: "bigint", nullable: true })
+  tg_chat_id?: number;
+
+  @Column({ type: "varchar", length: 100, nullable: true })
+  tg_username?: string;
 
   @CreateDateColumn()
   created_at?: Date;

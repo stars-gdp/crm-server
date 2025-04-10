@@ -24,4 +24,7 @@ export class Template {
     unique: true,
   })
   wa_id?: string;
+
+  @Column({ type: "varchar", length: 300 })
+  tg_inline_keyboard?: string;
 }

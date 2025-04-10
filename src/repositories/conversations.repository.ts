@@ -10,6 +10,13 @@ class ConversationsRepository {
       order: { timestamp: "ASC" },
     });
   }
+
+  findByLeadId(id: number): Promise<ConversationView[]> {
+    return this.repository.find({
+      where: { lead_id: id },
+      order: { timestamp: "ASC" },
+    });
+  }
 }
 
 export default new ConversationsRepository();

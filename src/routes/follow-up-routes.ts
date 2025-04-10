@@ -5,6 +5,7 @@ import LeadsUtils from "../utils/leads.utils";
 import {
   BitStatus,
   BomStatus,
+  ChannelType,
   ITemplateParameter,
   WgStatus,
 } from "../typescript/interfaces";
@@ -12,6 +13,9 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { LinkRepository } from "../repositories/link.repository";
+import TelegramUtils from "../utils/telegram.utils";
+import DateUtils from "../utils/date.utils";
+import TemplateRepository from "../repositories/template.repository";
 
 // Extend dayjs with required plugins
 dayjs.extend(utc);
@@ -88,15 +92,13 @@ router.post("/send-fu1", async (req: Request, res: Response) => {
       (lead) => lead.bom_date && isTomorrow(lead.bom_date),
     );
 
+    const fu_1 = await TemplateRepository.findByName("fu_1");
+
     const results = [];
 
     // Process each lead
     for (const lead of tomorrowLeads) {
       try {
-        if (!lead.lead_phone) {
-          continue;
-        }
-
         // Format the BOM date in IST timezone
         const bomDateIST = formatDateInIST(lead.bom_date!);
 
@@ -105,13 +107,27 @@ router.post("/send-fu1", async (req: Request, res: Response) => {
           { parameter_name: "slot", type: "TEXT", text: bomDateIST },
         ];
 
-        // Send the fu_1 template
-        const result = await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "fu_1",
-          params,
-          "en_US",
-        );
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            fu_1?.template_text!,
+            fu_1?.template_name!,
+            JSON.parse(fu_1?.tg_inline_keyboard!),
+            undefined,
+            [{ name: "slot", value: DateUtils.formatBomIST(lead?.bom_date!) }],
+          );
+        } else {
+          if (!lead.lead_phone) {
+            continue;
+          }
+          // Send the fu_1 template
+          await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "fu_1",
+            params,
+            "en_US",
+          );
+        }
 
         // Update lead record to mark fu_bom_sent as true
         await leadRepository.update(lead.id!, {
@@ -121,6 +137,7 @@ router.post("/send-fu1", async (req: Request, res: Response) => {
         results.push({
           lead_id: lead.id,
           lead_phone: lead.lead_phone,
+          tg_chat_id: lead.tg_chat_id,
           status: "success",
           bom_date: bomDateIST,
         });
@@ -173,13 +190,11 @@ router.post("/send-fu2", async (req: Request, res: Response) => {
 
     const results = [];
 
+    const fu_2 = await TemplateRepository.findByName("fu_2");
+
     // Process each lead
     for (const lead of todayLeads) {
       try {
-        if (!lead.lead_phone) {
-          continue;
-        }
-
         // Format the BOM date in IST timezone
         const bomDateIST = formatDateInIST(lead.bom_date!);
 
@@ -188,13 +203,27 @@ router.post("/send-fu2", async (req: Request, res: Response) => {
           { parameter_name: "slot", type: "TEXT", text: bomDateIST },
         ];
 
-        // Send the fu_2 template
-        const result = await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "fu_2",
-          params,
-          "en_US",
-        );
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            fu_2?.template_text!,
+            fu_2?.template_name!,
+            JSON.parse(fu_2?.tg_inline_keyboard!),
+            undefined,
+            [{ name: "slot", value: DateUtils.formatBomIST(lead?.bom_date!) }],
+          );
+        } else {
+          if (!lead.lead_phone) {
+            continue;
+          }
+          // Send the fu_2 template
+          const result = await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "fu_2",
+            params,
+            "en_US",
+          );
+        }
 
         // Update lead record to mark fu2_bom_sent as true
         await leadRepository.update(lead.id!, {
@@ -249,10 +278,6 @@ router.post("/send-15min-reminder", async (req: Request, res: Response) => {
       "SELECT * FROM leads WHERE opted_out = FALSE AND fu2_bom_confirmed = FALSE AND yes_bom_sent = FALSE AND bom_date IS NOT NULL",
     );
 
-    const now = new Date();
-    // Filter leads where:
-    // - bom_date is today
-    // - bom_time is within the next 15-20 minutes
     const reminderLeads = leads.filter((lead) => {
       if (!lead.bom_date) return false;
 
@@ -260,30 +285,35 @@ router.post("/send-15min-reminder", async (req: Request, res: Response) => {
       if (!isToday(lead.bom_date)) return false;
 
       return true;
-
-      // Calculate the time difference in minutes
-      // const diffMs = lead.bom_date.getTime() - now.getTime();
-      // const diffMinutes = Math.floor(diffMs / 60000);
-      //
-      // return diffMinutes >= 15 && diffMinutes <= 20;
     });
 
     const results = [];
 
+    const mins15_before_bom =
+      await TemplateRepository.findByName("15_mins_before_bom");
+
     // Process each lead
     for (const lead of reminderLeads) {
       try {
-        if (!lead.lead_phone) {
-          continue;
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            mins15_before_bom?.template_text!,
+            mins15_before_bom?.template_name!,
+            JSON.parse(mins15_before_bom?.tg_inline_keyboard!),
+          );
+        } else {
+          if (!lead.lead_phone) {
+            continue;
+          }
+          // Send the 15_mins_before_bom template
+          const result = await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "15_mins_before_bom",
+            [], // No parameters needed for this template
+            "en_US",
+          );
         }
-
-        // Send the 15_mins_before_bom template
-        const result = await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "15_mins_before_bom",
-          [], // No parameters needed for this template
-          "en_US",
-        );
 
         // Update lead record to mark yes_bom_sent as true
         await leadRepository.update(lead.id!, {
@@ -350,26 +380,43 @@ router.post("/send-zoom-link", async (req: Request, res: Response) => {
 
     const results = [];
 
+    const book_bom = await TemplateRepository.findByName("book_bom");
+
     // Process each lead
     for (const lead of todayLeads) {
       try {
-        if (!lead.lead_phone) {
-          continue;
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            book_bom?.template_text!,
+            book_bom?.template_name!,
+            undefined,
+            undefined,
+            [
+              {
+                name: "zoom_link",
+                value: zoomLink,
+              },
+            ],
+          );
+        } else {
+          if (!lead.lead_phone) {
+            continue;
+          }
+
+          // Create template parameters with the Zoom link
+          const params: ITemplateParameter[] = [
+            { parameter_name: "zoom_link", type: "TEXT", text: zoomLink },
+          ];
+
+          // Send the book_bom template with Zoom link
+          const result = await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "book_bom",
+            params,
+            "en_US",
+          );
         }
-
-        // Create template parameters with the Zoom link
-        const params: ITemplateParameter[] = [
-          { parameter_name: "zoom_link", type: "TEXT", text: zoomLink },
-        ];
-
-        // Send the book_bom template with Zoom link
-        const result = await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "book_bom",
-          params,
-          "en_US",
-        );
-
         // Update lead record to mark link_bom_sent as true
         await leadRepository.update(lead.id!, {
           link_bom_sent: true,
@@ -429,7 +476,7 @@ router.post("/send-bit-zoom-link", async (req: Request, res: Response) => {
     // - bit_date is today
     // - fu2_bit_sent is true (received second follow-up)
     const leads = await leadRepository.findAllByQuery(
-      "SELECT * FROM leads WHERE opted_out = FALSE AND bit_text = 'BIT' AND bit_date IS NOT NULL AND DATE(bit_date) = CURRENT_DATE AND fu2_bit_sent = TRUE",
+      "SELECT * FROM leads WHERE opted_out = FALSE AND bit_text = 'BIT' AND bit_date IS NOT NULL AND DATE(bit_date) = CURRENT_DATE",
     );
 
     // Filter leads where bit_date is today
@@ -439,25 +486,43 @@ router.post("/send-bit-zoom-link", async (req: Request, res: Response) => {
 
     const results = [];
 
+    const bit = await TemplateRepository.findByName("bit");
+
     // Process each lead
     for (const lead of todayLeads) {
       try {
-        if (!lead.lead_phone) {
-          continue;
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            bit?.template_text!,
+            bit?.template_name!,
+            undefined,
+            undefined,
+            [
+              {
+                name: "link",
+                value: zoomLink,
+              },
+            ],
+          );
+        } else {
+          if (!lead.lead_phone) {
+            continue;
+          }
+
+          // Create template parameters with the Zoom link
+          const params: ITemplateParameter[] = [
+            { parameter_name: "link", type: "TEXT", text: zoomLink },
+          ];
+
+          // Send the book_bit template with Zoom link (assuming this template exists)
+          const result = await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "bit",
+            params,
+            "en_US",
+          );
         }
-
-        // Create template parameters with the Zoom link
-        const params: ITemplateParameter[] = [
-          { parameter_name: "link", type: "TEXT", text: zoomLink },
-        ];
-
-        // Send the book_bit template with Zoom link (assuming this template exists)
-        const result = await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "bit",
-          params,
-          "en_US",
-        );
 
         // Update lead record to change bit_text to "Show"
         await leadRepository.update(lead.id!, {
@@ -522,25 +587,43 @@ router.post("/send-wg-zoom-link", async (req: Request, res: Response) => {
 
     const results = [];
 
+    const wg = await TemplateRepository.findByName("wg");
+
     // Process each lead
     for (const lead of leads) {
       try {
-        if (!lead.lead_phone) {
-          continue;
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            wg?.template_text!,
+            wg?.template_name!,
+            undefined,
+            undefined,
+            [
+              {
+                name: "link",
+                value: zoomLink,
+              },
+            ],
+          );
+        } else {
+          if (!lead.lead_phone) {
+            continue;
+          }
+
+          // Create template parameters with the Zoom link
+          const params: ITemplateParameter[] = [
+            { parameter_name: "link", type: "TEXT", text: zoomLink },
+          ];
+
+          // Send the book_bit template with Zoom link (assuming this template exists)
+          const result = await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "wg",
+            params,
+            "en_US",
+          );
         }
-
-        // Create template parameters with the Zoom link
-        const params: ITemplateParameter[] = [
-          { parameter_name: "link", type: "TEXT", text: zoomLink },
-        ];
-
-        // Send the book_bit template with Zoom link (assuming this template exists)
-        const result = await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "wg",
-          params,
-          "en_US",
-        );
 
         await leadRepository.update(lead.id!, {
           wg_text: WgStatus.WG1,
@@ -602,7 +685,9 @@ router.post("/send-not-ready-bom", async (req: Request, res: Response) => {
         fu2_bom_sent,
         fu2_bom_confirmed,
         yes_bom_sent,
-        link_bom_sent
+        link_bom_sent,
+        channel,
+        tg_chat_id
       FROM
         leads
       WHERE
@@ -631,28 +716,39 @@ router.post("/send-not-ready-bom", async (req: Request, res: Response) => {
       }>,
     };
 
+    const not_ready_bom = await TemplateRepository.findByName("not_ready_bom");
+
     // Send messages to each lead
     for (const lead of leads) {
       try {
-        if (!lead.lead_phone) {
-          results.failed++;
-          results.details.push({
-            lead_id: lead.id,
-            lead_phone: lead.lead_phone,
-            lead_name: lead.lead_name,
-            status: "failed",
-            error: "Missing phone number",
-          });
-          continue;
-        }
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            not_ready_bom?.template_text!,
+            not_ready_bom?.template_name!,
+            JSON.parse(not_ready_bom?.tg_inline_keyboard!),
+          );
+        } else {
+          if (!lead.lead_phone) {
+            results.failed++;
+            results.details.push({
+              lead_id: lead.id,
+              lead_phone: lead.lead_phone,
+              lead_name: lead.lead_name,
+              status: "failed",
+              error: "Missing phone number",
+            });
+            continue;
+          }
 
-        // Send the not_ready_bom template
-        await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "not_ready_bom",
-          [],
-          "en_US",
-        );
+          // Send the not_ready_bom template
+          await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "not_ready_bom",
+            [],
+            "en_US",
+          );
+        }
 
         LogsUtils.logMessage(
           `Sent not_ready_bom template to ${lead.lead_name} (${lead.lead_phone})`,
@@ -721,7 +817,9 @@ router.post("/send-no-code-bom", async (req: Request, res: Response) => {
         fu2_bom_sent,
         fu2_bom_confirmed,
         yes_bom_sent,
-        link_bom_sent
+        link_bom_sent,
+        channel,
+        tg_chat_id
       FROM
         leads
       WHERE
@@ -752,37 +850,50 @@ router.post("/send-no-code-bom", async (req: Request, res: Response) => {
       }>,
     };
 
+    const no_code_bom = await TemplateRepository.findByName("no_code_bom");
+
     // Send messages to each lead
     for (const lead of leads) {
       try {
-        if (!lead.lead_phone) {
-          results.failed++;
-          results.details.push({
-            lead_id: lead.id,
-            lead_phone: lead.lead_phone,
-            lead_name: lead.lead_name,
-            status: "failed",
-            error: "Missing phone number",
-          });
-          continue;
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            no_code_bom?.template_text!,
+            no_code_bom?.template_name!,
+            JSON.parse(no_code_bom?.tg_inline_keyboard!),
+            undefined,
+            [{ name: "name", value: lead?.lead_name || "" }],
+          );
+        } else {
+          if (!lead.lead_phone) {
+            results.failed++;
+            results.details.push({
+              lead_id: lead.id,
+              lead_phone: lead.lead_phone,
+              lead_name: lead.lead_name,
+              status: "failed",
+              error: "Missing phone number",
+            });
+            continue;
+          }
+
+          // Create template parameter for the name
+          const params: ITemplateParameter[] = [
+            {
+              parameter_name: "name",
+              type: "TEXT",
+              text: lead.lead_name || "Hello",
+            },
+          ];
+
+          // Send the no_code_bom template with the name parameter
+          await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "no_code_bom",
+            params,
+            "en_US",
+          );
         }
-
-        // Create template parameter for the name
-        const params: ITemplateParameter[] = [
-          {
-            parameter_name: "name",
-            type: "TEXT",
-            text: lead.lead_name || "Hello",
-          },
-        ];
-
-        // Send the no_code_bom template with the name parameter
-        await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "no_code_bom",
-          params,
-          "en_US",
-        );
 
         LogsUtils.logMessage(
           `Sent no_code_bom template to ${lead.lead_name} (${lead.lead_phone})`,
@@ -853,29 +964,40 @@ router.post("/send-fu-bit1", async (req: Request, res: Response) => {
       (lead) => lead.bit_date && isTomorrow(lead.bit_date),
     );
 
+    const bit_mingling = await TemplateRepository.findByName("bit_mingling");
+
     // Process each lead
     for (const lead of tomorrowLeads) {
       try {
-        if (!lead.lead_phone) {
-          continue;
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            bit_mingling?.template_text!,
+            bit_mingling?.template_name!,
+            JSON.parse(bit_mingling?.tg_inline_keyboard!),
+          );
+        } else {
+          if (!lead.lead_phone) {
+            continue;
+          }
+
+          // Format the BIT date in IST timezone
+          const bitDateIST = formatDateInIST(lead.bit_date!);
+
+          // Create template parameters
+          const params: ITemplateParameter[] = [
+            { parameter_name: "slot", type: "TEXT", text: bitDateIST },
+          ];
+
+          // Send the fu_bit_1 template
+          const result = await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "bit_mingling",
+            [],
+            //params,
+            "en_US",
+          );
         }
-
-        // Format the BIT date in IST timezone
-        const bitDateIST = formatDateInIST(lead.bit_date!);
-
-        // Create template parameters
-        const params: ITemplateParameter[] = [
-          { parameter_name: "slot", type: "TEXT", text: bitDateIST },
-        ];
-
-        // Send the fu_bit_1 template
-        const result = await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "bit_mingling",
-          [],
-          //params,
-          "en_US",
-        );
 
         // Update lead record to mark fu_bit_sent as true
         await leadRepository.update(lead.id!, {
@@ -886,7 +1008,6 @@ router.post("/send-fu-bit1", async (req: Request, res: Response) => {
           lead_id: lead.id,
           lead_phone: lead.lead_phone,
           status: "success",
-          bit_date: bitDateIST,
         });
       } catch (error) {
         LogsUtils.logError(
@@ -938,40 +1059,51 @@ router.post("/send-fu-bit2", async (req: Request, res: Response) => {
 
     const results = [];
 
+    const fu_bit_2 = await TemplateRepository.findByName("fu_bit_2");
+
     // Process each lead
     for (const lead of todayLeads) {
       try {
-        if (!lead.lead_phone) {
-          continue;
+        if (lead.channel === ChannelType.TELEGRAM) {
+          TelegramUtils.sendMessage(
+            lead.tg_chat_id!,
+            fu_bit_2?.template_text!,
+            fu_bit_2?.template_name!,
+            JSON.parse(fu_bit_2?.tg_inline_keyboard!),
+          );
+        } else {
+          if (!lead.lead_phone) {
+            continue;
+          }
+
+          // Get the BIT date in IST timezone
+          const bitDateIST = dayjs(lead.bit_date).tz(IST_TIMEZONE);
+
+          // Format slot as "today at HH:MM IST"
+          const slotFormatted = `today at ${bitDateIST.format("HH:mm")} IST`;
+
+          // Calculate link time (15 minutes before BIT time)
+          const linkTimeIST = bitDateIST.subtract(15, "minute");
+          const linkTimeFormatted = `${linkTimeIST.format("HH:mm")} IST`;
+
+          // Create template parameters
+          const params: ITemplateParameter[] = [
+            { parameter_name: "slot", type: "TEXT", text: slotFormatted },
+            {
+              parameter_name: "link_time",
+              type: "TEXT",
+              text: linkTimeFormatted,
+            },
+          ];
+
+          // Send the fu_bit_2 template
+          const result = await LeadsUtils.sendTemplateMessage(
+            lead.lead_phone,
+            "fu_bit_2",
+            params,
+            "en_US",
+          );
         }
-
-        // Get the BIT date in IST timezone
-        const bitDateIST = dayjs(lead.bit_date).tz(IST_TIMEZONE);
-
-        // Format slot as "today at HH:MM IST"
-        const slotFormatted = `today at ${bitDateIST.format("HH:mm")} IST`;
-
-        // Calculate link time (15 minutes before BIT time)
-        const linkTimeIST = bitDateIST.subtract(15, "minute");
-        const linkTimeFormatted = `${linkTimeIST.format("HH:mm")} IST`;
-
-        // Create template parameters
-        const params: ITemplateParameter[] = [
-          { parameter_name: "slot", type: "TEXT", text: slotFormatted },
-          {
-            parameter_name: "link_time",
-            type: "TEXT",
-            text: linkTimeFormatted,
-          },
-        ];
-
-        // Send the fu_bit_2 template
-        const result = await LeadsUtils.sendTemplateMessage(
-          lead.lead_phone,
-          "fu_bit_2",
-          params,
-          "en_US",
-        );
 
         // Update lead record to mark fu2_bit_sent as true
         await leadRepository.update(lead.id!, {
@@ -982,9 +1114,6 @@ router.post("/send-fu-bit2", async (req: Request, res: Response) => {
           lead_id: lead.id,
           lead_phone: lead.lead_phone,
           status: "success",
-          bit_date: bitDateIST.format("DD.MM.YY, HH:mm"),
-          link_time: linkTimeFormatted,
-          slot: slotFormatted,
         });
       } catch (error) {
         LogsUtils.logError(

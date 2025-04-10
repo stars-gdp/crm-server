@@ -763,7 +763,6 @@ class MessagesUtils {
         wa_response_id: contextId,
         type: type,
         media_id: mediaId,
-        timestamp: timestamp,
       };
 
       // Save message to database

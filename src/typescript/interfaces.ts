@@ -135,3 +135,7 @@ export enum LinkType {
   BIT = "BIT",
   WG = "WG",
 }
+export enum ChannelType {
+  WHATSAPP = "WhatsApp",
+  TELEGRAM = "Telegram",
+}
