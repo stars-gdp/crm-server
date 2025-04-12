@@ -177,7 +177,7 @@ export function initializeCronJobs(): void {
 
   // 11:45 UTC Sunday
   const wgLink = new CronJob(
-    "45 11 * * 1-6",
+    "50 11 * * 1-6",
     () => {
       triggerFollowUp("send-wg-zoom-link");
     },
@@ -188,7 +188,7 @@ export function initializeCronJobs(): void {
 
   // For Sunday meetings (09:30 UTC)
   const sundayNoCodeJob = new CronJob(
-    "0 11 * * 0", // 09:30 UTC on Sundays (0 = Sunday)
+    "45 10 * * 0", // 09:30 UTC on Sundays (0 = Sunday)
     () => {
       triggerFollowUp("send-no-code-bom");
     },
@@ -199,7 +199,7 @@ export function initializeCronJobs(): void {
 
   // For Monday-Saturday meetings (10:30 UTC)
   const weekdayNoCodeJob = new CronJob(
-    "0 12 * * 1-6", // 10:30 UTC Monday-Saturday (1-6)
+    "45 11 * * 1-6", // 10:30 UTC Monday-Saturday (1-6)
     () => {
       triggerFollowUp("send-no-code-bom");
     },

@@ -374,7 +374,9 @@ class TelegramUtils {
         templateName,
       );
     } catch (e) {
-      LogsUtils.logError(String(e));
+      LogsUtils.logError(
+        `${String(e)}, template: ${templateName}, chat id: ${chatId}`,
+      );
     }
   }
 }
